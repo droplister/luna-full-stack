@@ -34,6 +34,7 @@ export function Header() {
           {/* Cart Button */}
           <button
             onClick={toggleCart}
+            aria-label="Shopping cart"
             className="relative flex items-center space-x-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
           >
             <ShoppingBagIcon className="h-5 w-5" aria-hidden="true" />

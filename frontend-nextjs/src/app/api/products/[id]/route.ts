@@ -11,10 +11,11 @@ export const revalidate = 60;
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const productId = parseInt(params.id, 10);
+    const { id } = await params;
+    const productId = parseInt(id, 10);
 
     if (isNaN(productId) || productId <= 0) {
       return NextResponse.json(
@@ -31,7 +32,7 @@ export async function GET(
 
     return NextResponse.json(product, { status: 200 });
   } catch (error) {
-    console.error(`Error fetching product ${params.id}:`, error);
+    console.error('Error fetching product:', error);
 
     return NextResponse.json(
       {
