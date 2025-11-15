@@ -9,10 +9,13 @@ import { updateCartItemQuantity, removeCartItem } from '@/lib/services/cart';
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { lineId: string } }
+  { params }: { params: Promise<{ lineId: string }> }
 ) {
   try {
-    const { lineId } = params;
+    // Forward cookies from browser to backend
+    const cookieHeader = request.headers.get('cookie');
+
+    const { lineId } = await params;
 
     if (!lineId) {
       return NextResponse.json(
@@ -39,11 +42,21 @@ export async function PUT(
       );
     }
 
-    const cart = await updateCartItemQuantity(lineId, quantity);
+    const { data: cart, headers } = await updateCartItemQuantity(lineId, quantity, cookieHeader || undefined);
 
-    return NextResponse.json(cart, { status: 200 });
+    // Create response and forward Set-Cookie headers from backend
+    const response = NextResponse.json(cart, { status: 200 });
+
+    // Forward all Set-Cookie headers from backend to browser
+    // Use getSetCookie() to get all Set-Cookie headers (there can be multiple)
+    const setCookieHeaders = headers.getSetCookie();
+    setCookieHeaders.forEach((cookie) => {
+      response.headers.append('Set-Cookie', cookie);
+    });
+
+    return response;
   } catch (error) {
-    console.error(`Error updating cart line ${params.lineId}:`, error);
+    console.error(`Error updating cart line:`, error);
 
     return NextResponse.json(
       {
@@ -58,10 +71,13 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { lineId: string } }
+  { params }: { params: Promise<{ lineId: string }> }
 ) {
   try {
-    const { lineId } = params;
+    // Forward cookies from browser to backend
+    const cookieHeader = request.headers.get('cookie');
+
+    const { lineId } = await params;
 
     if (!lineId) {
       return NextResponse.json(
@@ -74,11 +90,21 @@ export async function DELETE(
       );
     }
 
-    const cart = await removeCartItem(lineId);
+    const { data: cart, headers } = await removeCartItem(lineId, cookieHeader || undefined);
 
-    return NextResponse.json(cart, { status: 200 });
+    // Create response and forward Set-Cookie headers from backend
+    const response = NextResponse.json(cart, { status: 200 });
+
+    // Forward all Set-Cookie headers from backend to browser
+    // Use getSetCookie() to get all Set-Cookie headers (there can be multiple)
+    const setCookieHeaders = headers.getSetCookie();
+    setCookieHeaders.forEach((cookie) => {
+      response.headers.append('Set-Cookie', cookie);
+    });
+
+    return response;
   } catch (error) {
-    console.error(`Error removing cart line ${params.lineId}:`, error);
+    console.error(`Error removing cart line:`, error);
 
     return NextResponse.json(
       {

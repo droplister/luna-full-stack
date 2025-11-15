@@ -4,14 +4,16 @@
  */
 
 import { getCart, addToCart, updateCartLine, removeCartLine } from '../clients/backend';
+import type { FetchResult } from '../clients/upstream';
 import type { Cart, AddToCartRequest } from '../types/cart';
 import type { Product } from '../types/products';
 
 /**
  * Fetch current cart state
+ * @param cookieHeader - Optional cookie header to forward to backend
  */
-export async function fetchCart(): Promise<Cart> {
-  return getCart();
+export async function fetchCart(cookieHeader?: string): Promise<FetchResult<Cart>> {
+  return getCart(cookieHeader);
 }
 
 /**
@@ -19,21 +21,22 @@ export async function fetchCart(): Promise<Cart> {
  *
  * @param product - Product to add
  * @param quantity - Quantity to add
- * @returns Updated cart state
+ * @param cookieHeader - Optional cookie header to forward to backend
+ * @returns Updated cart state and headers
  */
-export async function addProductToCart(product: Product, quantity: number = 1): Promise<Cart> {
+export async function addProductToCart(product: Product, quantity: number = 1, cookieHeader?: string): Promise<FetchResult<Cart>> {
   const request: AddToCartRequest = {
     product_id: product.id,
     quantity,
     title: product.title,
-    price: Math.round(product.price * 100), // Convert dollars to cents
+    price: product.price, // Backend will convert to cents
     image: product.thumbnail,
     brand: product.brand,
     category: product.category,
     sku: product.sku,
   };
 
-  return addToCart(request);
+  return addToCart(request, cookieHeader);
 }
 
 /**
@@ -41,20 +44,22 @@ export async function addProductToCart(product: Product, quantity: number = 1): 
  *
  * @param lineId - Line item ID (MD5 hash)
  * @param quantity - New quantity
- * @returns Updated cart state
+ * @param cookieHeader - Optional cookie header to forward to backend
+ * @returns Updated cart state and headers
  */
-export async function updateCartItemQuantity(lineId: string, quantity: number): Promise<Cart> {
-  return updateCartLine(lineId, quantity);
+export async function updateCartItemQuantity(lineId: string, quantity: number, cookieHeader?: string): Promise<FetchResult<Cart>> {
+  return updateCartLine(lineId, quantity, cookieHeader);
 }
 
 /**
  * Remove item from cart
  *
  * @param lineId - Line item ID (MD5 hash)
- * @returns Updated cart state
+ * @param cookieHeader - Optional cookie header to forward to backend
+ * @returns Updated cart state and headers
  */
-export async function removeCartItem(lineId: string): Promise<Cart> {
-  return removeCartLine(lineId);
+export async function removeCartItem(lineId: string, cookieHeader?: string): Promise<FetchResult<Cart>> {
+  return removeCartLine(lineId, cookieHeader);
 }
 
 /**

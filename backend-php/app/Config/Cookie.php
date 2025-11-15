@@ -53,6 +53,7 @@ class Cookie extends BaseConfig
      * --------------------------------------------------------------------------
      *
      * Cookie will only be set if a secure HTTPS connection exists.
+     * Note: Some browsers allow SameSite=None with Secure=false on localhost
      */
     public bool $secure = false;
 

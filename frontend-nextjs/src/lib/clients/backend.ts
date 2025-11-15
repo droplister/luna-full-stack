@@ -3,21 +3,37 @@
  * Communicates with the CodeIgniter 4 cart API
  */
 
-import { fetchJson } from './upstream';
+import { fetchJsonWithHeaders, type FetchResult } from './upstream';
 import type { Cart, AddToCartRequest, UpdateCartLineRequest } from '../types/cart';
 
 // Base URL from environment variable, fallback to localhost
 const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_BASE_URL || 'http://localhost:8080/api';
 
 /**
+ * Helper to get headers with optional cookie forwarding
+ */
+function getHeaders(cookieHeader?: string): HeadersInit {
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+
+  if (cookieHeader) {
+    headers['Cookie'] = cookieHeader;
+  }
+
+  return headers;
+}
+
+/**
  * Fetch current cart state
  *
- * @returns Current cart with items and subtotal
+ * @param cookieHeader - Optional cookie header to forward from browser
+ * @returns Current cart with items, subtotal, and response headers
  */
-export async function getCart(): Promise<Cart> {
-  return fetchJson<Cart>(`${BASE_URL}/cart`, {
+export async function getCart(cookieHeader?: string): Promise<FetchResult<Cart>> {
+  return fetchJsonWithHeaders<Cart>(`${BASE_URL}/cart`, {
+    headers: cookieHeader ? getHeaders(cookieHeader) : undefined,
     cache: 'no-store',
-    credentials: 'include', // Important: include cookies for session
   });
 }
 
@@ -25,17 +41,15 @@ export async function getCart(): Promise<Cart> {
  * Add item to cart or update quantity if already exists
  *
  * @param request - Product details and quantity
- * @returns Updated cart state
+ * @param cookieHeader - Optional cookie header to forward from browser
+ * @returns Updated cart state and response headers
  */
-export async function addToCart(request: AddToCartRequest): Promise<Cart> {
-  return fetchJson<Cart>(`${BASE_URL}/cart/add`, {
+export async function addToCart(request: AddToCartRequest, cookieHeader?: string): Promise<FetchResult<Cart>> {
+  return fetchJsonWithHeaders<Cart>(`${BASE_URL}/cart/add`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: getHeaders(cookieHeader),
     body: JSON.stringify(request),
     cache: 'no-store',
-    credentials: 'include',
   });
 }
 
@@ -44,22 +58,21 @@ export async function addToCart(request: AddToCartRequest): Promise<Cart> {
  *
  * @param lineId - MD5 hash line ID
  * @param quantity - New quantity (0 or negative will remove item)
- * @returns Updated cart state
+ * @param cookieHeader - Optional cookie header to forward from browser
+ * @returns Updated cart state and response headers
  */
 export async function updateCartLine(
   lineId: string,
-  quantity: number
-): Promise<Cart> {
+  quantity: number,
+  cookieHeader?: string
+): Promise<FetchResult<Cart>> {
   const request: UpdateCartLineRequest = { quantity };
 
-  return fetchJson<Cart>(`${BASE_URL}/cart/update/${lineId}`, {
+  return fetchJsonWithHeaders<Cart>(`${BASE_URL}/cart/update/${lineId}`, {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: getHeaders(cookieHeader),
     body: JSON.stringify(request),
     cache: 'no-store',
-    credentials: 'include',
   });
 }
 
@@ -67,12 +80,13 @@ export async function updateCartLine(
  * Remove a line item from cart
  *
  * @param lineId - MD5 hash line ID
- * @returns Updated cart state
+ * @param cookieHeader - Optional cookie header to forward from browser
+ * @returns Updated cart state and response headers
  */
-export async function removeCartLine(lineId: string): Promise<Cart> {
-  return fetchJson<Cart>(`${BASE_URL}/cart/remove/${lineId}`, {
+export async function removeCartLine(lineId: string, cookieHeader?: string): Promise<FetchResult<Cart>> {
+  return fetchJsonWithHeaders<Cart>(`${BASE_URL}/cart/remove/${lineId}`, {
     method: 'DELETE',
+    headers: cookieHeader ? getHeaders(cookieHeader) : undefined,
     cache: 'no-store',
-    credentials: 'include',
   });
 }

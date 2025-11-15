@@ -5,13 +5,28 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { fetchCart, addProductToCart } from '@/lib/services/cart';
 import type { Product } from '@/lib/types/products';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const cart = await fetchCart();
-    return NextResponse.json(cart, { status: 200 });
+    // Forward cookies from browser to backend
+    const cookieHeader = request.headers.get('cookie');
+
+    const { data: cart, headers } = await fetchCart(cookieHeader || undefined);
+
+    // Create response and forward Set-Cookie headers from backend
+    const response = NextResponse.json(cart, { status: 200 });
+
+    // Forward all Set-Cookie headers from backend to browser
+    // Use getSetCookie() to get all Set-Cookie headers (there can be multiple)
+    const setCookieHeaders = headers.getSetCookie();
+    setCookieHeaders.forEach((cookie) => {
+      response.headers.append('Set-Cookie', cookie);
+    });
+
+    return response;
   } catch (error) {
     console.error('Error fetching cart:', error);
 
@@ -28,6 +43,9 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    // Forward cookies from browser to backend
+    const cookieHeader = request.headers.get('cookie');
+
     const body = await request.json();
 
     // Validate required fields
@@ -56,9 +74,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const cart = await addProductToCart(product, quantity);
+    const { data: cart, headers } = await addProductToCart(product, quantity, cookieHeader || undefined);
 
-    return NextResponse.json(cart, { status: 200 });
+    // Create response and forward Set-Cookie headers from backend
+    const response = NextResponse.json(cart, { status: 200 });
+
+    // Forward all Set-Cookie headers from backend to browser
+    // Use getSetCookie() to get all Set-Cookie headers (there can be multiple)
+    const setCookieHeaders = headers.getSetCookie();
+    setCookieHeaders.forEach((cookie) => {
+      response.headers.append('Set-Cookie', cookie);
+    });
+
+    return response;
   } catch (error) {
     console.error('Error adding to cart:', error);
 
