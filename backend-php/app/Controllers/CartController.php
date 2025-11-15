@@ -22,6 +22,8 @@ class CartController extends ResourceController
 {
     use ResponseTrait;
 
+    protected $format = 'json';
+
     /**
      * GET /api/cart
      * Retrieve the current cart state from session
@@ -62,6 +64,14 @@ class CartController extends ResourceController
             ], 400);
         }
 
+        if ($request->quantity <= 0) {
+            return $this->fail([
+                'status' => 400,
+                'message' => 'Cart Error',
+                'description' => 'Quantity must be greater than zero'
+            ], 400);
+        }
+
         $cart = $this->getCartFromSession();
 
         // Generate line ID to check if line already exists
@@ -71,9 +81,9 @@ class CartController extends ResourceController
 
         if ($existingIndex !== false) {
             // Update existing line quantity
-            $cart['items'][$existingIndex]['quantity'] += $request->quantity;
-            $cart['items'][$existingIndex]['line_total'] =
-                $cart['items'][$existingIndex]['price'] * $cart['items'][$existingIndex]['quantity'];
+            $item = &$cart['items'][$existingIndex];
+            $item['quantity'] += $request->quantity;
+            $item['line_total'] = $item['price'] * $item['quantity'];
         } else {
             // Add new line
             $newLine = $this->buildCartLine($request);
@@ -101,8 +111,16 @@ class CartController extends ResourceController
      *
      * Returns: Full updated cart object
      */
-    public function update($lineId)
+    public function update($lineId = null)
     {
+        if ($lineId === null) {
+            return $this->fail([
+                'status' => 400,
+                'message' => 'Cart Error',
+                'description' => 'Line ID is required'
+            ], 400);
+        }
+
         $request = $this->request->getJSON();
 
         if (!$request || !isset($request->quantity)) {
@@ -129,9 +147,9 @@ class CartController extends ResourceController
             array_splice($cart['items'], $lineIndex, 1);
         } else {
             // Update quantity
-            $cart['items'][$lineIndex]['quantity'] = $request->quantity;
-            $cart['items'][$lineIndex]['line_total'] =
-                $cart['items'][$lineIndex]['price'] * $request->quantity;
+            $item = &$cart['items'][$lineIndex];
+            $item['quantity'] = $request->quantity;
+            $item['line_total'] = $item['price'] * $request->quantity;
         }
 
         // Recalculate totals
@@ -149,8 +167,16 @@ class CartController extends ResourceController
      *
      * Returns: Full updated cart object
      */
-    public function remove($lineId)
+    public function remove($lineId = null)
     {
+        if ($lineId === null) {
+            return $this->fail([
+                'status' => 400,
+                'message' => 'Cart Error',
+                'description' => 'Line ID is required'
+            ], 400);
+        }
+
         $cart = $this->getCartFromSession();
         $lineIndex = $this->findLineIndex($cart['items'], $lineId);
 
@@ -213,12 +239,12 @@ class CartController extends ResourceController
      * Build cart line from request data
      * Uses MD5 hash of product_id for unique identification
      */
-    private function buildCartLine($request): array
+    private function buildCartLine(object $request): array
     {
-        $priceInCents = (int)($request->price * 100);
+        $priceInCents = (int) round($request->price * 100);
         $quantity = $request->quantity;
 
-        // Generate unique line ID using MD5 hash of product_id
+        // Line ID derived from product_id so each product maps to a single cart line
         $lineId = $this->generateLineId($request->product_id);
 
         return [
@@ -239,7 +265,7 @@ class CartController extends ResourceController
      * Find line index in cart by line ID
      * Lookup by MD5 hash instead of product_id
      */
-    private function findLineIndex(array $lines, string $lineId)
+    private function findLineIndex(array $lines, string $lineId): int|false
     {
         foreach ($lines as $index => $line) {
             if ($line['line_id'] === $lineId) {

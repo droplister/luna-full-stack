@@ -16,14 +16,32 @@ class Home extends ResourceController
     public function index()
     {
         return $this->respond([
-            'success' => true,
-            'message' => 'Rebuy Engine API - CodeIgniter 4',
-            'version' => '1.0.0',
+            'api' => [
+                'name' => 'Rebuy Engine API',
+                'version' => '1.0.0',
+                'framework' => 'CodeIgniter 4'
+            ],
             'endpoints' => [
-                'GET /api/cart' => 'Get cart state',
-                'POST /api/cart/add' => 'Add line to cart',
-                'PUT /api/cart/update/{line_id}' => 'Update cart line',
-                'DELETE /api/cart/remove/{line_id}' => 'Remove cart line'
+                [
+                    'method' => 'GET',
+                    'path' => '/api/cart',
+                    'description' => 'Get cart state'
+                ],
+                [
+                    'method' => 'POST',
+                    'path' => '/api/cart/add',
+                    'description' => 'Add line to cart'
+                ],
+                [
+                    'method' => 'PUT',
+                    'path' => '/api/cart/update/{line_id}',
+                    'description' => 'Update cart line'
+                ],
+                [
+                    'method' => 'DELETE',
+                    'path' => '/api/cart/remove/{line_id}',
+                    'description' => 'Remove cart line'
+                ]
             ]
         ]);
     }
