@@ -3,10 +3,9 @@ node_modules/
 vendor/
 
 # Next.js
-frontend-nextjs/.next/
-frontend-nextjs/out/
-frontend-nextjs/build/
-frontend-nextjs/.turbo
+.next/
+out/
+.turbo
 
 # Production
 dist/
@@ -16,7 +15,6 @@ build/
 .env
 .env.local
 .env.*.local
-*.env
 
 # Keep example env files
 !.env.example
@@ -72,3 +70,4 @@ composer.lock
 .cache
 .temp
 tmp/
+.claude
