@@ -1,0 +1,74 @@
+# Dependencies
+node_modules/
+vendor/
+
+# Next.js
+frontend-nextjs/.next/
+frontend-nextjs/out/
+frontend-nextjs/build/
+frontend-nextjs/.turbo
+
+# Production
+dist/
+build/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+*.env
+
+# Keep example env files
+!.env.example
+!.env.local.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Testing
+coverage/
+.nyc_output/
+
+# PHP
+backend-php-simple/vendor/
+backend-php-codeigniter/vendor/
+backend-php-codeigniter/writable/
+backend-php/writable/
+*.cache
+composer.lock
+
+# Misc
+*.pem
+.cache
+.temp
+tmp/

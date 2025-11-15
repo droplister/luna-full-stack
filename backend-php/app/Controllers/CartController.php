@@ -303,4 +303,13 @@ class CartController extends ResourceController
     {
         return md5((string)$productId);
     }
+
+    /**
+     * OPTIONS handler for CORS preflight requests
+     * The CORS filter will handle adding the actual headers
+     */
+    public function options()
+    {
+        return $this->response->setStatusCode(200);
+    }
 }

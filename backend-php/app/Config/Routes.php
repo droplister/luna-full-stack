@@ -25,4 +25,10 @@ $routes->group('api', ['namespace' => 'App\Controllers'], function ($routes) {
     $routes->post('cart/add', 'CartController::add');
     $routes->put('cart/update/(:any)', 'CartController::update/$1');      // (:any) for MD5 hash
     $routes->delete('cart/remove/(:any)', 'CartController::remove/$1');   // (:any) for MD5 hash
+
+    // OPTIONS routes for CORS preflight requests
+    $routes->options('cart', 'CartController::options');
+    $routes->options('cart/add', 'CartController::options');
+    $routes->options('cart/update/(:any)', 'CartController::options');
+    $routes->options('cart/remove/(:any)', 'CartController::options');
 });
