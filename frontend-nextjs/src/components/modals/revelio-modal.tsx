@@ -83,10 +83,10 @@ export function RevelioModal() {
             <div>
               <div className="text-center">
                 <DialogTitle as="h3" className="text-2xl font-semibold text-gray-900 mb-2">
-                  Cast Revelio on Your Savings
+                  Cast Revelio on Savings
                 </DialogTitle>
                 <p className="text-sm text-gray-500 mb-6">
-                  Click and hold to scratch and reveal a special offer.
+                  Click to scratch and reveal a special offer.
                 </p>
               </div>
 

@@ -62,7 +62,7 @@ export function Header() {
             transition
             className="relative flex w-full max-w-xs transform flex-col overflow-y-auto bg-white pb-12 shadow-xl transition duration-300 ease-in-out data-closed:-translate-x-full"
           >
-            <div className="flex px-4 pt-5 pb-2">
+            <div className="flex justify-end px-4 pt-5 pb-2">
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(false)}
@@ -75,85 +75,68 @@ export function Header() {
             </div>
 
             {/* Mobile Navigation Links */}
-            <div className="space-y-6 border-t border-gray-200 px-4 py-6">
-              {/* Mega Menu Categories */}
-              <TabGroup className="mt-2">
-                <div className="border-b border-gray-200">
-                  <TabList className="-mb-px flex space-x-8">
-                    {navigation.megaMenus.map((category) => (
-                      <Tab
-                        key={category.name}
-                        className="flex-1 border-b-2 border-transparent px-1 py-4 text-base font-medium whitespace-nowrap text-gray-900 data-selected:border-indigo-600 data-selected:text-indigo-600"
-                      >
-                        {category.name}
-                      </Tab>
-                    ))}
-                  </TabList>
-                </div>
-                <TabPanels as={Fragment}>
-                  {navigation.megaMenus.map((category) => (
-                    <TabPanel key={category.name} className="space-y-10 px-4 pt-10 pb-8">
-                      <div className="grid grid-cols-2 gap-x-4">
-                        {category.featured.map((item) => (
-                          <div key={item.name} className="group relative text-sm">
-                            <img
-                              alt={item.imageAlt}
-                              src={item.imageSrc}
-                              className="aspect-square w-full rounded-lg bg-gray-100 object-cover group-hover:opacity-75"
-                            />
-                            <Link
-                              href={item.href}
-                              className="mt-6 block font-medium text-gray-900"
-                              onClick={() => setMobileMenuOpen(false)}
-                            >
-                              <span aria-hidden="true" className="absolute inset-0" style={{ zIndex: Z_INDEX.MEGA_MENU_FEATURED_LINK }} />
-                              {item.name}
-                            </Link>
-                            <p aria-hidden="true" className="mt-1">
-                              Shop now
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                      {category.sections.map((section) => (
-                        <div key={section.name}>
-                          <p id={`${category.id}-${section.id}-heading-mobile`} className="font-medium text-gray-900">
-                            {section.name}
-                          </p>
-                          <ul
-                            role="list"
-                            aria-labelledby={`${category.id}-${section.id}-heading-mobile`}
-                            className="mt-6 flex flex-col space-y-6"
-                          >
-                            {section.items.map((item) => (
-                              <li key={item.name} className="flow-root">
-                                <Link
-                                  href={item.href}
-                                  className="-m-2 block p-2 text-gray-500"
-                                  onClick={() => setMobileMenuOpen(false)}
-                                >
-                                  {item.name}
-                                </Link>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      ))}
-                    </TabPanel>
-                  ))}
-                </TabPanels>
-              </TabGroup>
-
-              {/* Shop All */}
+            <div className="space-y-6 px-4 py-6">
+              {/* Shop All - First */}
               <div className="flow-root">
                 <Link
                   href={navigation.shopAll.href}
-                  className="-m-2 block p-2 font-medium text-gray-900"
+                  className="-m-2 block p-2 font-semibold text-gray-900"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {navigation.shopAll.name}
                 </Link>
               </div>
+
+              {/* The Goods sections - without the heading */}
+              {navigation.megaMenus[0]?.sections.map((section) => (
+                <div key={section.name}>
+                  <ul
+                    role="list"
+                    className="flex flex-col space-y-6"
+                  >
+                    {section.items.map((item) => (
+                      <li key={item.name} className="flow-root">
+                        <Link
+                          href={item.href}
+                          className="-m-2 block p-2 text-gray-500"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          {item.name}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+
+              {/* Featured Products - Last */}
+              {navigation.megaMenus[0]?.featured && (
+                <div className="mt-12">
+                  <p className="font-semibold text-gray-900">Featured Products</p>
+                  <div className="mt-6 grid grid-cols-2 gap-x-4">
+                    {navigation.megaMenus[0].featured.map((item) => (
+                      <div key={item.name} className="group relative text-sm">
+                        <img
+                          alt={item.imageAlt}
+                          src={item.imageSrc}
+                          className="aspect-square w-full rounded-lg bg-gray-100 object-cover group-hover:opacity-75"
+                        />
+                        <Link
+                          href={item.href}
+                          className="mt-6 block font-medium text-gray-900"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          <span aria-hidden="true" className="absolute inset-0" style={{ zIndex: Z_INDEX.MEGA_MENU_FEATURED_LINK }} />
+                          {item.name}
+                        </Link>
+                        <p aria-hidden="true" className="mt-1">
+                          Shop now
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </DialogPanel>
         </div>
@@ -179,7 +162,7 @@ export function Header() {
               <div className="ml-4 flex lg:ml-0">
                 <Link href="/">
                   <span className="sr-only">{name}</span>
-                  <span className="font-brand font-semibold text-3xl text-gray-900">
+                  <span className="font-brand font-semibold text-xl lg:text-3xl text-gray-900">
                     {name}
                   </span>
                 </Link>

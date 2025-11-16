@@ -162,9 +162,23 @@ export function ProductPageClient({ params }: ProductPageClientProps) {
       {/* Breadcrumbs */}
       <Breadcrumbs items={breadcrumbs} currentProductId={productId} />
 
-      <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6 sm:py-24 lg:grid lg:max-w-7xl lg:grid-cols-2 lg:gap-x-8 lg:px-8">
+      <div className="mx-auto max-w-2xl px-4 py-6 sm:px-6 sm:py-12 lg:grid lg:max-w-7xl lg:grid-cols-2 lg:gap-x-8 lg:px-8">
+        {/* Product image - First on mobile */}
+        <div className="lg:col-start-2 lg:row-span-2 lg:self-center">
+          <div className="overflow-hidden rounded-lg lg:cursor-zoom-in">
+            <Image
+              alt={product.title}
+              src={product.images[0] || product.thumbnail}
+              width={600}
+              height={600}
+              loading="eager"
+              className="aspect-square w-full object-cover lg:transition-all lg:duration-300 lg:hover:scale-125"
+            />
+          </div>
+        </div>
+
         {/* Product details */}
-        <div className="lg:max-w-lg lg:self-end">
+        <div className="mt-10 lg:mt-0 lg:col-start-1 lg:row-start-1 lg:max-w-lg lg:self-end">
           {product.brand && <p className="text-sm font-medium text-gray-500">{product.brand}</p>}
 
           <div className="mt-4 flex items-center justify-between gap-4">
@@ -211,20 +225,6 @@ export function ProductPageClient({ params }: ProductPageClientProps) {
               <p className="ml-2 text-sm text-gray-500">{product.stock > 0 ? `In stock (${product.stock} available)` : 'Out of stock'}</p>
             </div>
           </section>
-        </div>
-
-        {/* Product image */}
-        <div className="mt-10 lg:col-start-2 lg:row-span-2 lg:mt-0 lg:self-center">
-          <div className="overflow-hidden rounded-lg cursor-zoom-in">
-            <Image
-              alt={product.title}
-              src={product.images[0] || product.thumbnail}
-              width={600}
-              height={600}
-              loading="eager"
-              className="aspect-square w-full object-cover transition-all duration-300 hover:scale-125"
-            />
-          </div>
         </div>
 
         {/* Product form */}

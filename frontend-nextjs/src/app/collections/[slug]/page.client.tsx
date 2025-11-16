@@ -15,7 +15,7 @@ import {
   DisclosureButton,
   DisclosurePanel,
 } from '@headlessui/react'
-import { XMarkIcon, ChevronDownIcon } from '@heroicons/react/20/solid'
+import { XMarkIcon, ChevronDownIcon, FunnelIcon } from '@heroicons/react/20/solid'
 import { ProductCard } from '@/components/cards/product-card'
 import { CategoryList } from '@/components/ui/category-list'
 import { FilterGroup } from '@/components/ui/filter-group'
@@ -293,7 +293,7 @@ export function CategoryPageClient({ params }: CategoryPageClientProps) {
 
       {/* Products Grid */}
       <main className="mx-auto max-w-2xl px-4 lg:max-w-7xl lg:px-8">
-        <div className="pt-12 pb-24 lg:grid lg:grid-cols-4 lg:gap-x-8">
+        <div className="pt-6 pb-24 lg:pt-12 lg:grid lg:grid-cols-4 lg:gap-x-8">
           {/* Desktop Filters Sidebar */}
           <aside>
             <form className="hidden lg:block">
@@ -310,9 +310,22 @@ export function CategoryPageClient({ params }: CategoryPageClientProps) {
               Products
             </h2>
 
-            {/* Sort menu */}
-            <div className="flex items-center justify-end pb-4">
-              <SortOptions currentSort={sortBy} onSortChange={setSortBy} />
+            {/* Product count and sort menu */}
+            <div className="flex items-center justify-between pb-4">
+              <div className="text-sm text-gray-500">
+                Showing {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
+              </div>
+              <div className="flex items-center gap-4">
+                <button
+                  type="button"
+                  onClick={() => setMobileFiltersOpen(true)}
+                  className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-gray-900 lg:hidden"
+                >
+                  <FunnelIcon className="mr-2 size-5" aria-hidden="true" />
+                  Filters
+                </button>
+                <SortOptions currentSort={sortBy} onSortChange={setSortBy} />
+              </div>
             </div>
 
             {shouldShowLoading ? (

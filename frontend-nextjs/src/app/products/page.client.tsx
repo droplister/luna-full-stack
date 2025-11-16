@@ -178,7 +178,7 @@ export function ProductsPageClient() {
 
       {/* Products Grid */}
       <main className="mx-auto max-w-2xl px-4 lg:max-w-7xl lg:px-8">
-        <div className="pt-12 pb-24 lg:grid lg:grid-cols-4 lg:gap-x-8">
+        <div className="pt-6 pb-24 lg:pt-12 lg:grid lg:grid-cols-4 lg:gap-x-8">
           {/* Sidebar with category and tag filters */}
           <aside>
             <form className="hidden lg:block">
@@ -220,6 +220,9 @@ export function ProductsPageClient() {
               <>
                 {/* Product count and sort menu */}
                 <div className="flex items-center justify-between pb-4">
+                  <div className="text-sm text-gray-500">
+                    Showing {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
+                  </div>
                   <div className="flex items-center gap-4">
                     <button
                       type="button"
@@ -229,11 +232,8 @@ export function ProductsPageClient() {
                       <FunnelIcon className="mr-2 size-5" aria-hidden="true" />
                       Filters
                     </button>
-                    <div className="text-sm text-gray-500">
-                      Showing {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
-                    </div>
+                    <SortOptions currentSort={sortBy} onSortChange={setSortBy} />
                   </div>
-                  <SortOptions currentSort={sortBy} onSortChange={setSortBy} />
                 </div>
                 <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 lg:gap-x-8">
                   {filteredProducts.map((product, index) => (

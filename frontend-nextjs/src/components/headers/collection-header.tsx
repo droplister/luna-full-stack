@@ -16,7 +16,7 @@ export function CollectionHeader({ title, description }: CollectionHeaderProps) 
     <div>
       {/* Page Header */}
       <main className="mx-auto max-w-2xl px-4 lg:max-w-7xl lg:px-8">
-        <div className="border-b border-gray-200 pt-24 pb-10">
+        <div className="border-b border-gray-200 pt-12 pb-6 lg:pt-24 lg:pb-10">
           <h1 className="text-4xl font-bold tracking-tight text-gray-900">{title}</h1>
           {description && (
             <p className="mt-4 text-base text-gray-500">

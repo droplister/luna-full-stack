@@ -32,22 +32,22 @@ export function OrderSummary({
   // Compact variant - for cart drawer (no tax, simpler layout)
   if (variant === 'compact') {
     return (
-      <div className="border-t border-gray-200 px-4 py-6 sm:px-6">
-        <div className="flex justify-between text-base font-medium text-gray-900">
+      <div className="border-t border-gray-200 px-4 py-4 sm:px-6 sm:py-5">
+        <div className="flex justify-between text-sm font-medium text-gray-900 sm:text-base">
           <p>Subtotal</p>
           <p>{formatPrice(subtotal, currency)}</p>
         </div>
-        <div className="flex justify-between text-base font-medium text-gray-900 mt-4">
+        <div className="flex justify-between text-sm font-medium text-gray-900 mt-2 sm:mt-3 sm:text-base">
           <p>Shipping</p>
           <p>{shipping === 0 ? '✨ FREE' : formatPrice(shipping, currency)}</p>
         </div>
-        <p className="mt-0.5 text-sm text-gray-500">Taxes calculated at checkout.</p>
+        <p className="mt-0.5 text-xs text-gray-500 sm:text-sm">Taxes calculated at checkout.</p>
         {showCheckoutButton && (
-          <div className="mt-6">
+          <div className="mt-4 sm:mt-5">
             <Link
               href="/checkout"
               onClick={onCheckout}
-              className="flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-6 py-3 text-base font-medium text-white shadow-xs hover:bg-indigo-700"
+              className="flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-6 py-3 text-base font-semibold text-white shadow-xs hover:bg-indigo-700"
             >
               Checkout
             </Link>

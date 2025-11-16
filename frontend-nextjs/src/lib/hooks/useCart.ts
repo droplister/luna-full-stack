@@ -253,9 +253,6 @@ export function useCart(): UseCartReturn {
         // Update with server response
         setCart(cart);
         clearSnapshot();
-
-        // Success toast
-        toast.success(`Added ${product.title} to cart`);
       } catch (err) {
         // Rollback on error
         rollbackState();
