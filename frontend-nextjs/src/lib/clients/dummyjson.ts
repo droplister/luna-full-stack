@@ -4,7 +4,8 @@
  */
 
 import { fetchJson, buildUrl } from './upstream';
-import type { DummyProduct, DummyProductList } from '../types/products';
+import type { DummyProduct, DummyProductList, ProductCategory } from '../types/products';
+import { configuredCategories } from '../config/brand';
 
 const BASE_URL = 'https://dummyjson.com';
 
@@ -45,12 +46,12 @@ export async function searchProducts(query: string): Promise<DummyProductList> {
 }
 
 /**
- * Get all product categories
+ * Get all product categories with full data
  *
- * @returns List of category names
+ * @returns List of category objects with slug, name, and url
  */
-export async function getCategories(): Promise<string[]> {
-  return fetchJson<string[]>(`${BASE_URL}/products/categories`);
+export async function getCategories(): Promise<ProductCategory[]> {
+  return fetchJson<ProductCategory[]>(`${BASE_URL}/products/categories`);
 }
 
 /**
@@ -61,4 +62,33 @@ export async function getCategories(): Promise<string[]> {
  */
 export async function getProductsByCategory(category: string): Promise<DummyProductList> {
   return fetchJson<DummyProductList>(`${BASE_URL}/products/category/${category}`);
+}
+
+/**
+ * Get all products from configured categories in parallel
+ * Categories are defined in brand config
+ *
+ * @returns Combined list of all products from configured categories
+ */
+export async function getAllConfiguredCategoryProducts(): Promise<DummyProductList> {
+  // Fetch all configured categories in parallel
+  const results = await Promise.all(
+    configuredCategories.map(category =>
+      fetchJson<DummyProductList>(`${BASE_URL}/products/category/${category}`)
+    )
+  );
+
+  // Merge all products and deduplicate by ID
+  const allProducts = results.flatMap(result => result.products);
+  const uniqueProducts = Array.from(
+    new Map(allProducts.map(product => [product.id, product])).values()
+  );
+
+  // Return in DummyProductList format
+  return {
+    products: uniqueProducts,
+    total: uniqueProducts.length,
+    skip: 0,
+    limit: uniqueProducts.length,
+  };
 }

@@ -1,6 +1,6 @@
 /**
  * useProducts Hook
- * Provides product fetching with pagination support
+ * Provides product fetching (no pagination - fetches all ~40 products from configured categories)
  */
 
 'use client';
@@ -8,35 +8,27 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Product } from '../types/products';
 
-interface UseProductsOptions {
-  limit?: number;
-  initialPage?: number;
-}
-
 interface ProductsResponse {
   products: Product[];
   total: number;
-  skip: number;
-  limit: number;
 }
 
-export function useProducts({ limit = 12, initialPage = 1 }: UseProductsOptions = {}) {
+export function useProducts() {
   const [products, setProducts] = useState<Product[]>([]);
   const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(initialPage);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   /**
-   * Fetch products for current page
+   * Fetch all products from configured categories
    */
   const fetchProducts = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
 
-      const skip = (page - 1) * limit;
-      const response = await fetch(`/api/products?limit=${limit}&skip=${skip}`);
+      const response = await fetch('/api/products');
 
       if (!response.ok) {
         throw new Error('Failed to fetch products');
@@ -52,57 +44,35 @@ export function useProducts({ limit = 12, initialPage = 1 }: UseProductsOptions 
     } finally {
       setIsLoading(false);
     }
-  }, [page, limit]);
+  }, []);
 
-  // Fetch products when page or limit changes
+  // Fetch products on mount
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
 
-  // Calculate pagination info
-  const totalPages = Math.ceil(total / limit);
-  const hasNextPage = page < totalPages;
-  const hasPrevPage = page > 1;
+  /**
+   * Filter products by category (client-side)
+   */
+  const filteredProducts = selectedCategory
+    ? products.filter(p => p.category === selectedCategory)
+    : products;
 
   /**
-   * Go to next page
+   * Change category filter
    */
-  const nextPage = useCallback(() => {
-    if (hasNextPage) {
-      setPage((p) => p + 1);
-    }
-  }, [hasNextPage]);
-
-  /**
-   * Go to previous page
-   */
-  const prevPage = useCallback(() => {
-    if (hasPrevPage) {
-      setPage((p) => p - 1);
-    }
-  }, [hasPrevPage]);
-
-  /**
-   * Go to specific page
-   */
-  const goToPage = useCallback((pageNumber: number) => {
-    setPage(pageNumber);
+  const setCategory = useCallback((category: string | null) => {
+    setSelectedCategory(category);
   }, []);
 
   return {
     // Product data
-    products,
-    total,
+    products: filteredProducts,
+    total: filteredProducts.length,
 
-    // Pagination
-    page,
-    totalPages,
-    hasNextPage,
-    hasPrevPage,
-    nextPage,
-    prevPage,
-    goToPage,
-    setPage,
+    // Filtering
+    category: selectedCategory,
+    setCategory,
 
     // UI state
     isLoading,
@@ -154,5 +124,55 @@ export function useProduct(id: number) {
     isLoading,
     error,
     refetch: fetchProduct,
+  };
+}
+
+/**
+ * useRelatedProducts Hook
+ * Fetch products from the same category, excluding the current product
+ */
+export function useRelatedProducts(category: string | undefined, currentProductId: number | undefined, limit: number = 4) {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchRelatedProducts = useCallback(async () => {
+    if (!category) return;
+
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const response = await fetch('/api/products');
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch related products');
+      }
+
+      const data: ProductsResponse = await response.json();
+
+      // Filter by category and exclude current product
+      const related = data.products
+        .filter(p => p.category === category && p.id !== currentProductId)
+        .slice(0, limit);
+
+      setProducts(related);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch related products');
+      setProducts([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [category, currentProductId, limit]);
+
+  useEffect(() => {
+    fetchRelatedProducts();
+  }, [fetchRelatedProducts]);
+
+  return {
+    products,
+    isLoading,
+    error,
+    refetch: fetchRelatedProducts,
   };
 }

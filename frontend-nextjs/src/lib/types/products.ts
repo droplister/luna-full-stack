@@ -51,19 +51,27 @@ export interface DummyProductList {
 }
 
 /**
- * Normalized Product type for internal use
- * Simplifies DummyProduct to only what we need
+ * Product Review from DummyJSON API
  */
-export interface Product {
-  id: number;
-  title: string;
-  description: string;
-  price: number; // in dollars
-  thumbnail: string;
-  images: string[];
-  category: string;
-  brand?: string;
-  sku: string;
-  stock: number;
+export interface ProductReview {
   rating: number;
+  comment: string;
+  date: string;
+  reviewerName: string;
+  reviewerEmail: string;
+}
+
+/**
+ * Product type - direct alias to DummyProduct (API response)
+ * No normalization needed - we use the full API response
+ */
+export type Product = DummyProduct;
+
+/**
+ * Product Category from DummyJSON API
+ */
+export interface ProductCategory {
+  slug: string;
+  name: string;
+  url: string;
 }

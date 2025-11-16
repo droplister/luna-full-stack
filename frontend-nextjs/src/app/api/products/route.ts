@@ -1,21 +1,31 @@
 /**
  * Products API Route (BFF Layer)
- * GET /api/products?limit=12&skip=0
+ * GET /api/products?search=query
+ *
+ * Fetches all products from configured categories (no pagination needed)
+ * Categories: tops, womens-dresses, womens-shoes, womens-jewellery,
+ *            womens-bags, sunglasses, fragrances, beauty
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchAllProducts } from '@/lib/services/products';
+import { fetchAllCategoryProducts, searchProductsByQuery } from '@/lib/services/products';
 
-// Revalidate products every 60 seconds (ISR)
-export const revalidate = 60;
+// Heavy caching: revalidate every 5 minutes (300 seconds)
+// All ~40 products from 8 categories are fetched in parallel and cached
+export const revalidate = 300;
 
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const limit = parseInt(searchParams.get('limit') || '12', 10);
-    const skip = parseInt(searchParams.get('skip') || '0', 10);
+    const search = searchParams.get('search');
 
-    const result = await fetchAllProducts(limit, skip);
+    // Search or return all category products
+    let result;
+    if (search) {
+      result = await searchProductsByQuery(search);
+    } else {
+      result = await fetchAllCategoryProducts();
+    }
 
     return NextResponse.json(result, { status: 200 });
   } catch (error) {

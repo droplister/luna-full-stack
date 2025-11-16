@@ -162,11 +162,12 @@ export function useCart() {
 
   /**
    * Decrement item quantity
+   * Setting quantity to 0 will remove the item from cart (backend behavior)
    */
   const decrementItem = useCallback(
     async (lineId: string) => {
       const item = items.find((i) => i.line_id === lineId);
-      if (item && item.quantity > 1) {
+      if (item) {
         await updateQuantity(lineId, item.quantity - 1);
       }
     },

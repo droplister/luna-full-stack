@@ -76,6 +76,23 @@ test.describe('Cart Functionality', () => {
     await expect(page.locator('text=Qty 1')).toBeVisible();
   });
 
+  test('should remove item when decrementing quantity to 0', async ({ page }) => {
+    await page.waitForSelector('button:has-text("Add to Cart")');
+
+    // Add product to cart
+    await page.locator('button:has-text("Add to Cart")').first().click();
+    await page.waitForSelector('text=Shopping cart');
+
+    // Verify cart has item with quantity 1
+    await expect(page.locator('text=Qty 1')).toBeVisible();
+
+    // Click decrement button to reduce quantity to 0
+    await page.locator('button:has-text("−")').first().click();
+
+    // Verify cart is empty (item auto-removed by backend)
+    await expect(page.locator('text=Your cart is empty')).toBeVisible();
+  });
+
   test('should remove item from cart', async ({ page }) => {
     await page.waitForSelector('button:has-text("Add to Cart")');
 

@@ -5,11 +5,14 @@
 
 'use client'
 
+import Link from 'next/link'
 import Image from 'next/image'
 import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react'
 import { XMarkIcon } from '@heroicons/react/24/outline'
 import { useCart } from '@/lib/hooks/useCart'
 import { formatPrice } from '@/lib/services/cart'
+import { Z_INDEX } from '@/lib/config/z-index'
+import { cartConfig, calculateShipping } from '@/lib/config/cart'
 
 export function CartDrawer() {
   const {
@@ -25,8 +28,14 @@ export function CartDrawer() {
     removeItem,
   } = useCart()
 
+  // Shipping calculation
+  const shipping = calculateShipping(subtotal)
+  const progressPercent = Math.min((subtotal / cartConfig.freeShippingPromo.threshold) * 100, 100)
+  const hasReachedFreeShipping = subtotal >= cartConfig.freeShippingPromo.threshold
+  const amountUntilFreeShipping = cartConfig.freeShippingPromo.threshold - subtotal
+
   return (
-    <Dialog open={isCartOpen} onClose={closeCart} className="relative z-10">
+    <Dialog open={isCartOpen} onClose={closeCart} className="relative" style={{ zIndex: Z_INDEX.CART_DRAWER }}>
       <DialogBackdrop
         transition
         className="fixed inset-0 bg-gray-500/75 transition-opacity duration-500 ease-in-out data-closed:opacity-0"
@@ -59,6 +68,38 @@ export function CartDrawer() {
                   {error && (
                     <div className="mt-4 rounded-md bg-red-50 p-4">
                       <p className="text-sm text-red-800">{error}</p>
+                    </div>
+                  )}
+
+                  {/* Free Shipping Progress Bar */}
+                  {cartConfig.freeShippingPromo.enabled && items.length > 0 && (
+                    <div className="mt-6">
+                      <div className="mb-2">
+                        {hasReachedFreeShipping ? (
+                          <p className="text-sm font-medium text-indigo-600">
+                            Your cart looks exceptionally magical!
+                          </p>
+                        ) : (
+                          <p className="text-sm text-gray-600">
+                            Free owl post on orders over ${cartConfig.freeShippingPromo.threshold / 100}.
+                          </p>
+                        )}
+                      </div>
+                      <div className="relative h-2 w-full overflow-hidden rounded-full bg-gray-200">
+                        <div
+                          className="h-full rounded-full bg-indigo-600 transition-all duration-500 ease-out"
+                          style={{ width: `${progressPercent}%` }}
+                        />
+                      </div>
+                      {hasReachedFreeShipping ? (
+                        <p className="mt-1 text-xs text-gray-500">
+                          FREE owl post on this order was unlocked...
+                        </p>
+                      ) : (
+                        <p className="mt-1 text-xs text-gray-500">
+                          {formatPrice(amountUntilFreeShipping, currency)} away from free shipping
+                        </p>
+                      )}
                     </div>
                   )}
 
@@ -95,7 +136,7 @@ export function CartDrawer() {
                                     <button
                                       type="button"
                                       onClick={() => decrementItem(item.line_id)}
-                                      disabled={isLoading || item.quantity <= 1}
+                                      disabled={isLoading}
                                       className="text-gray-500 hover:text-gray-700 disabled:opacity-50"
                                     >
                                       −
@@ -137,27 +178,19 @@ export function CartDrawer() {
                       <p>Subtotal</p>
                       <p>{formatPrice(subtotal, currency)}</p>
                     </div>
-                    <p className="mt-0.5 text-sm text-gray-500">Shipping and taxes calculated at checkout.</p>
+                    <div className="flex justify-between text-base font-medium text-gray-900 mt-4">
+                      <p>Shipping</p>
+                      <p>{hasReachedFreeShipping ? 'FREE' : formatPrice(shipping, currency)}</p>
+                    </div>
+                    <p className="mt-0.5 text-sm text-gray-500">Taxes calculated at checkout.</p>
                     <div className="mt-6">
-                      <a
-                        href="#"
+                      <Link
+                        href="/checkout"
+                        onClick={closeCart}
                         className="flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-6 py-3 text-base font-medium text-white shadow-xs hover:bg-indigo-700"
                       >
                         Checkout
-                      </a>
-                    </div>
-                    <div className="mt-6 flex justify-center text-center text-sm text-gray-500">
-                      <p>
-                        or{' '}
-                        <button
-                          type="button"
-                          onClick={closeCart}
-                          className="font-medium text-indigo-600 hover:text-indigo-500"
-                        >
-                          Continue Shopping
-                          <span aria-hidden="true"> &rarr;</span>
-                        </button>
-                      </p>
+                      </Link>
                     </div>
                   </div>
                 )}

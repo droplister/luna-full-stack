@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Header } from "@/components/header";
-import { CartDrawer } from "@/components/cart-drawer";
+import { LayoutContent } from "@/components/layout-content";
+import { brandConfig } from "@/lib/config/brand";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ShopHub - Your Online Shopping Destination",
-  description: "Browse and shop from thousands of products with ease",
+  title: `${brandConfig.name} - ${brandConfig.tagline}`,
+  description: brandConfig.tagline,
 };
 
 export default function RootLayout({
@@ -29,11 +29,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Header />
-        <main className="min-h-screen bg-gray-50">
-          {children}
-        </main>
-        <CartDrawer />
+        <LayoutContent>{children}</LayoutContent>
       </body>
     </html>
   );

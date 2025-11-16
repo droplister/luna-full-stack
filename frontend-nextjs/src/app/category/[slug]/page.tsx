@@ -1,12 +1,13 @@
 /**
- * Products Listing Page - Shop All
- * Displays all products from configured categories (no pagination)
- * Includes tag-based filtering
+ * Category Page with Dynamic Routing
+ * Displays products filtered by category with tag-based filtering
+ * Based on the full-layout.tsx design
  */
 
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { use, useState, useEffect, useMemo } from 'react'
+import Link from 'next/link'
 import {
   Dialog,
   DialogBackdrop,
@@ -15,47 +16,73 @@ import {
   DisclosureButton,
   DisclosurePanel,
 } from '@headlessui/react'
-import { XMarkIcon, ChevronDownIcon, FunnelIcon } from '@heroicons/react/20/solid'
-import { useProducts } from '@/lib/hooks/useProducts'
-import { useCart } from '@/lib/hooks/useCart'
+import { XMarkIcon, ChevronDownIcon, PlusIcon } from '@heroicons/react/20/solid'
 import { ProductCard } from '@/components/product-card'
-import { ProductFiltersSidebar } from '@/components/product-filters-sidebar'
 import { ProductSortMenu, type SortOption } from '@/components/product-sort-menu'
 import { ActiveFiltersBar } from '@/components/active-filters-bar'
 import { CollectionHeader } from '@/components/headers/collection-header'
 import { Breadcrumbs } from '@/components/breadcrumbs'
+import { ProductFiltersSidebar } from '@/components/product-filters-sidebar'
+import { useCart } from '@/lib/hooks/useCart'
 import { useBreadcrumbs } from '@/lib/hooks/useBreadcrumbs'
+import { categoryDisplayNames, categoryDescriptions, brandConfig } from '@/lib/config/brand'
 import { toTitleCase } from '@/lib/utils/format'
+import type { Product } from '@/lib/types/products'
 import { Z_INDEX } from '@/lib/config/z-index'
+import { fetchProductsByCategory } from '@/lib/services/products'
 
-export default function ProductsPage() {
-  const { products, total, isLoading, error, category, setCategory } = useProducts()
+interface CategoryPageProps {
+  params: Promise<{
+    slug: string
+  }>
+}
+
+export default function CategoryPage(props: CategoryPageProps) {
+  const params = use(props.params)
+  const { slug } = params
   const { addItem } = useCart()
-  const breadcrumbs = useBreadcrumbs()
+
+  const [products, setProducts] = useState<Product[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
+
+  // Tag-based filtering
+  const [availableTags, setAvailableTags] = useState<string[]>([])
+  const [tagCounts, setTagCounts] = useState<Map<string, number>>(new Map())
   const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set())
   const [sortBy, setSortBy] = useState<SortOption>('default')
 
-  // Extract unique tags from all products with counts
-  const tagCounts = useMemo(() => {
-    const counts = new Map<string, number>()
-    products.forEach((product) => {
-      if (product.tags && Array.isArray(product.tags)) {
-        product.tags.forEach((tag) => {
-          counts.set(tag, (counts.get(tag) || 0) + 1)
-        })
-      }
-    })
-    return counts
-  }, [products])
+  // Fetch products for this category
+  useEffect(() => {
+    const loadCategoryProducts = async () => {
+      try {
+        setIsLoading(true)
+        setError(null)
 
-  const availableTags = useMemo(() => {
-    // Filter out tags with less than 3 products and sort alphabetically
-    return Array.from(tagCounts.entries())
-      .filter(([_, count]) => count >= 3)
-      .map(([tag]) => tag)
-      .sort()
-  }, [tagCounts])
+        const result = await fetchProductsByCategory(slug, 100, 0)
+        setProducts(result.products)
+
+        // Extract unique tags from products with counts
+        const counts = new Map<string, number>()
+        result.products.forEach((p) => {
+          if (p.tags && Array.isArray(p.tags)) {
+            p.tags.forEach((tag: string) => {
+              counts.set(tag, (counts.get(tag) || 0) + 1)
+            })
+          }
+        })
+        setTagCounts(counts)
+        setAvailableTags(Array.from(counts.keys()).sort())
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load products')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadCategoryProducts()
+  }, [slug])
 
   // Filter products by selected tags and apply sorting
   const filteredProducts = useMemo(() => {
@@ -63,6 +90,7 @@ export default function ProductsPage() {
     const filtered = selectedTags.size === 0
       ? products
       : products.filter((product) => {
+          // Product must have tags and at least one selected tag
           return product.tags && Array.from(selectedTags).some((tag) => product.tags!.includes(tag))
         })
 
@@ -99,6 +127,38 @@ export default function ProductsPage() {
     })
   }
 
+  // Get categories from the same section as current category
+  const getSectionCategories = () => {
+    const categories: Array<{ slug: string; name: string; href: string }> = []
+
+    for (const menu of brandConfig.navigation.megaMenus) {
+      for (const section of menu.sections) {
+        // Check if this section contains the current category
+        const hasCurrentCategory = section.items.some(
+          (item) => item.href.split('/').pop() === slug
+        )
+
+        if (hasCurrentCategory) {
+          // Return all categories from this section
+          section.items.forEach((item) => {
+            const itemSlug = item.href.split('/').pop() || ''
+            categories.push({
+              slug: itemSlug,
+              name: categoryDisplayNames[itemSlug] || item.name,
+              href: item.href,
+            })
+          })
+          break
+        }
+      }
+      if (categories.length > 0) break
+    }
+
+    return categories
+  }
+
+  const sectionCategories = getSectionCategories()
+
   // Prepare tag filters for sidebar with counts
   const tagFilters = availableTags.length > 0 ? [{
     id: 'tags',
@@ -112,12 +172,19 @@ export default function ProductsPage() {
     onChange: handleTagToggle,
   }] : []
 
+  const categoryName = categoryDisplayNames[slug] || slug
+  const categoryDescription = categoryDescriptions[slug]
+  const breadcrumbs = useBreadcrumbs({ categorySlug: slug })
+
   if (error) {
     return (
       <div className="bg-white">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
           <div className="text-center">
-            <p className="text-red-600">Error loading products: {error}</p>
+            <p className="text-red-600">Error loading category: {error}</p>
+            <Link href="/products" className="mt-4 inline-block text-indigo-600 hover:text-indigo-500">
+              Browse all products
+            </Link>
           </div>
         </div>
       </div>
@@ -157,7 +224,7 @@ export default function ProductsPage() {
             {/* Mobile Filters */}
             {availableTags.length > 0 && (
               <form className="mt-4">
-                <Disclosure as="div" className="border-t border-gray-200 pt-4 pb-4" defaultOpen={true}>
+                <Disclosure as="div" className="border-t border-gray-200 pt-4 pb-4">
                   <fieldset>
                     <legend className="w-full px-2">
                       <DisclosureButton className="group flex w-full items-center justify-between p-2 text-gray-400 hover:text-gray-500">
@@ -203,8 +270,8 @@ export default function ProductsPage() {
 
       {/* Collection Header */}
       <CollectionHeader
-        title="Shop All"
-        description="Discover our complete collection of carefully curated treasures"
+        title={categoryName}
+        description={categoryDescription}
       />
 
       {/* Active Filters Bar */}
@@ -228,16 +295,26 @@ export default function ProductsPage() {
       {/* Products Grid */}
       <main className="mx-auto max-w-2xl px-4 lg:max-w-7xl lg:px-8">
         <div className="pt-12 pb-24 lg:grid lg:grid-cols-4 lg:gap-x-8">
-          {/* Sidebar with category and tag filters */}
+          {/* Desktop Filters Sidebar */}
           <aside>
             <ProductFiltersSidebar
-              currentCategory={category || undefined}
+              categories={sectionCategories}
+              currentCategory={slug}
               filters={tagFilters}
             />
           </aside>
 
-          {/* Main content */}
-          <div className="lg:col-span-3">
+          {/* Products */}
+          <section aria-labelledby="product-heading" className="mt-6 lg:col-span-3 lg:mt-0">
+            <h2 id="product-heading" className="sr-only">
+              Products
+            </h2>
+
+            {/* Sort menu */}
+            <div className="flex items-center justify-end pb-4">
+              <ProductSortMenu currentSort={sortBy} onSortChange={setSortBy} />
+            </div>
+
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
                 <p className="text-gray-500">Loading products...</p>
@@ -255,32 +332,13 @@ export default function ProductsPage() {
                 )}
               </div>
             ) : (
-              <>
-                {/* Product count and sort menu */}
-                <div className="flex items-center justify-between pb-4">
-                  <div className="flex items-center gap-4">
-                    <button
-                      type="button"
-                      onClick={() => setMobileFiltersOpen(true)}
-                      className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-gray-900 lg:hidden"
-                    >
-                      <FunnelIcon className="mr-2 size-5" aria-hidden="true" />
-                      Filters
-                    </button>
-                    <div className="text-sm text-gray-500">
-                      Showing {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
-                    </div>
-                  </div>
-                  <ProductSortMenu currentSort={sortBy} onSortChange={setSortBy} />
-                </div>
-                <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 lg:gap-x-8">
-                  {filteredProducts.map((product, index) => (
-                    <ProductCard key={product.id} product={product} onAddToCart={addItem} priority={index < 3} />
-                  ))}
-                </div>
-              </>
+              <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 lg:gap-x-8">
+                {filteredProducts.map((product, index) => (
+                  <ProductCard key={product.id} product={product} onAddToCart={addItem} priority={index < 3} />
+                ))}
+              </div>
             )}
-          </div>
+          </section>
         </div>
       </main>
     </div>
