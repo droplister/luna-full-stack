@@ -5,9 +5,11 @@
 
 'use client'
 
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { ShoppingBagIcon } from '@heroicons/react/24/outline'
 import { useCart } from '@/lib/hooks/useCart'
+import { ApparateButton } from './apparate-button'
 
 export interface Breadcrumb {
   name: string
@@ -17,10 +19,36 @@ export interface Breadcrumb {
 interface BreadcrumbsProps {
   items: Breadcrumb[]
   showCheckout?: boolean
+  currentProductId?: number
 }
 
-export function Breadcrumbs({ items, showCheckout = true }: BreadcrumbsProps) {
+export function Breadcrumbs({ items, showCheckout = true, currentProductId }: BreadcrumbsProps) {
   const { itemCount } = useCart()
+  const [showButton, setShowButton] = useState(itemCount > 0)
+  const prevItemCountRef = useRef(itemCount)
+
+  useEffect(() => {
+    const prevCount = prevItemCountRef.current
+
+    // If going from 0 to 1+ items, delay the button appearance
+    if (prevCount === 0 && itemCount > 0) {
+      const timer = setTimeout(() => {
+        setShowButton(true)
+      }, 400) // 400ms delay to let cart overlay finish opening
+
+      return () => clearTimeout(timer)
+    }
+    // If items removed or already had items, show immediately
+    else if (itemCount > 0) {
+      setShowButton(true)
+    }
+    // Hide immediately when count goes to 0
+    else {
+      setShowButton(false)
+    }
+
+    prevItemCountRef.current = itemCount
+  }, [itemCount])
 
   if (items.length <= 1) {
     return null
@@ -32,7 +60,7 @@ export function Breadcrumbs({ items, showCheckout = true }: BreadcrumbsProps) {
         <div className="flex items-center justify-between py-4">
           <ol role="list" className="flex items-center space-x-4">
             {items.map((breadcrumb, index) => (
-              <li key={breadcrumb.href + index}>
+              <li key={`${breadcrumb.name}-${index}`}>
                 <div className="flex items-center">
                   {index > 0 && (
                     <svg
@@ -60,17 +88,19 @@ export function Breadcrumbs({ items, showCheckout = true }: BreadcrumbsProps) {
             ))}
           </ol>
 
-          {showCheckout && itemCount > 0 && (
-            <div className="hidden lg:block">
+          <div className="hidden lg:block -my-2">
+            {showCheckout && showButton ? (
               <Link
-                href="/cart"
-                className="flex items-center gap-2 text-sm font-medium text-indigo-600 hover:text-indigo-500"
+                href="/checkout"
+                className="flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
               >
                 <ShoppingBagIcon className="h-5 w-5" aria-hidden="true" />
                 Checkout
               </Link>
-            </div>
-          )}
+            ) : (
+              <ApparateButton currentProductId={currentProductId} />
+            )}
+          </div>
         </div>
       </nav>
     </div>

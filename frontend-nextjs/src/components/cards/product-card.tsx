@@ -8,18 +8,15 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useState } from 'react'
-import { StarIcon } from '@heroicons/react/20/solid'
 import type { Product } from '@/lib/types/products'
 import { Z_INDEX } from '@/lib/config/z-index'
+import { StarRating } from '../ui/star-rating'
+import { getProductUrl } from '@/lib/utils/slugify'
 
 interface ProductCardProps {
   product: Product
   onAddToCart: (product: Product) => Promise<void>
   priority?: boolean
-}
-
-function classNames(...classes: (string | boolean | undefined)[]) {
-  return classes.filter(Boolean).join(' ')
 }
 
 export function ProductCard({ product, onAddToCart, priority = false }: ProductCardProps) {
@@ -39,9 +36,11 @@ export function ProductCard({ product, onAddToCart, priority = false }: ProductC
 
   const rating = product.rating || 0
 
+  const productUrl = getProductUrl(product)
+
   return (
     <div className="group relative text-sm">
-      <Link href={`/products/${product.id}`}>
+      <Link href={productUrl}>
         <Image
           alt={product.title}
           src={product.thumbnail}
@@ -54,7 +53,7 @@ export function ProductCard({ product, onAddToCart, priority = false }: ProductC
       </Link>
 
       <h3 className="mt-4 font-medium text-gray-900">
-        <Link href={`/products/${product.id}`}>
+        <Link href={productUrl}>
           {product.title}
         </Link>
       </h3>
@@ -64,18 +63,7 @@ export function ProductCard({ product, onAddToCart, priority = false }: ProductC
       )}
 
       <div className="mt-2 flex items-center justify-between">
-        <div className="flex items-center gap-1">
-          {[0, 1, 2, 3, 4].map((starIndex) => (
-            <StarIcon
-              key={starIndex}
-              aria-hidden="true"
-              className={classNames(
-                rating > starIndex ? 'text-yellow-400' : 'text-gray-200',
-                'size-4 shrink-0',
-              )}
-            />
-          ))}
-        </div>
+        <StarRating rating={rating} size="sm" />
         <p className="font-medium text-gray-900">${product.price.toFixed(2)}</p>
       </div>
 

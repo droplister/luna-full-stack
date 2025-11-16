@@ -1,12 +1,11 @@
 /**
- * Category Page with Dynamic Routing
- * Displays products filtered by category with tag-based filtering
- * Based on the full-layout.tsx design
+ * Category Page Client Component
+ * Client-side filtering and interaction logic
  */
 
 'use client'
 
-import { use, useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import {
   Dialog,
@@ -16,29 +15,30 @@ import {
   DisclosureButton,
   DisclosurePanel,
 } from '@headlessui/react'
-import { XMarkIcon, ChevronDownIcon, PlusIcon } from '@heroicons/react/20/solid'
-import { ProductCard } from '@/components/product-card'
-import { ProductSortMenu, type SortOption } from '@/components/product-sort-menu'
-import { ActiveFiltersBar } from '@/components/active-filters-bar'
+import { XMarkIcon, ChevronDownIcon } from '@heroicons/react/20/solid'
+import { ProductCard } from '@/components/cards/product-card'
+import { CategoryList } from '@/components/ui/category-list'
+import { FilterGroup } from '@/components/ui/filter-group'
+import { SortOptions, type SortOption } from '@/components/ui/sort-options'
+import { ActiveFilters } from '@/components/ui/active-filters'
 import { CollectionHeader } from '@/components/headers/collection-header'
-import { Breadcrumbs } from '@/components/breadcrumbs'
-import { ProductFiltersSidebar } from '@/components/product-filters-sidebar'
+import { Breadcrumbs } from '@/components/ui/breadcrumbs'
 import { useCart } from '@/lib/hooks/useCart'
 import { useBreadcrumbs } from '@/lib/hooks/useBreadcrumbs'
-import { categoryDisplayNames, categoryDescriptions, brandConfig } from '@/lib/config/brand'
-import { toTitleCase } from '@/lib/utils/format'
+import { useDelayedLoading } from '@/lib/hooks/useDelayedLoading'
+import { categoryDisplayNames, categoryDescriptions, navigation } from '@/lib/cms'
+import { toTitleCase, kebabToTitleCase } from '@/lib/utils/format'
 import type { Product } from '@/lib/types/products'
-import { Z_INDEX } from '@/lib/config/z-index'
+import { Z_INDEX } from '@/lib/config'
 import { fetchProductsByCategory } from '@/lib/services/products'
 
-interface CategoryPageProps {
-  params: Promise<{
+interface CategoryPageClientProps {
+  params: {
     slug: string
-  }>
+  }
 }
 
-export default function CategoryPage(props: CategoryPageProps) {
-  const params = use(props.params)
+export function CategoryPageClient({ params }: CategoryPageClientProps) {
   const { slug } = params
   const { addItem } = useCart()
 
@@ -52,6 +52,9 @@ export default function CategoryPage(props: CategoryPageProps) {
   const [tagCounts, setTagCounts] = useState<Map<string, number>>(new Map())
   const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set())
   const [sortBy, setSortBy] = useState<SortOption>('default')
+
+  // Delay showing loading state to prevent flicker for fast loads
+  const shouldShowLoading = useDelayedLoading(isLoading)
 
   // Fetch products for this category
   useEffect(() => {
@@ -87,12 +90,13 @@ export default function CategoryPage(props: CategoryPageProps) {
   // Filter products by selected tags and apply sorting
   const filteredProducts = useMemo(() => {
     // Step 1: Filter by tags
-    const filtered = selectedTags.size === 0
-      ? products
-      : products.filter((product) => {
-          // Product must have tags and at least one selected tag
-          return product.tags && Array.from(selectedTags).some((tag) => product.tags!.includes(tag))
-        })
+    const filtered =
+      selectedTags.size === 0
+        ? products
+        : products.filter((product) => {
+            // Product must have tags and at least one selected tag
+            return product.tags && Array.from(selectedTags).some((tag) => product.tags!.includes(tag))
+          })
 
     // Step 2: Sort if needed
     if (sortBy === 'default') {
@@ -131,12 +135,10 @@ export default function CategoryPage(props: CategoryPageProps) {
   const getSectionCategories = () => {
     const categories: Array<{ slug: string; name: string; href: string }> = []
 
-    for (const menu of brandConfig.navigation.megaMenus) {
+    for (const menu of navigation.megaMenus) {
       for (const section of menu.sections) {
         // Check if this section contains the current category
-        const hasCurrentCategory = section.items.some(
-          (item) => item.href.split('/').pop() === slug
-        )
+        const hasCurrentCategory = section.items.some((item) => item.href.split('/').pop() === slug)
 
         if (hasCurrentCategory) {
           // Return all categories from this section
@@ -160,19 +162,25 @@ export default function CategoryPage(props: CategoryPageProps) {
   const sectionCategories = getSectionCategories()
 
   // Prepare tag filters for sidebar with counts
-  const tagFilters = availableTags.length > 0 ? [{
-    id: 'tags',
-    name: 'Tags',
-    options: availableTags.map(tag => ({
-      value: tag,
-      label: toTitleCase(tag),
-      checked: selectedTags.has(tag),
-      count: tagCounts.get(tag) || 0,
-    })),
-    onChange: handleTagToggle,
-  }] : []
+  const tagFilters =
+    availableTags.length > 0
+      ? [
+          {
+            id: 'tags',
+            name: 'Tags',
+            options: availableTags.map((tag) => ({
+              value: tag,
+              label: toTitleCase(tag),
+              checked: selectedTags.has(tag),
+              count: tagCounts.get(tag) || 0,
+            })),
+            onChange: handleTagToggle,
+          },
+        ]
+      : []
 
-  const categoryName = categoryDisplayNames[slug] || slug
+  // Use CMS display name if available, otherwise format the slug
+  const categoryName = categoryDisplayNames[slug] || kebabToTitleCase(slug)
   const categoryDescription = categoryDescriptions[slug]
   const breadcrumbs = useBreadcrumbs({ categorySlug: slug })
 
@@ -198,10 +206,7 @@ export default function CategoryPage(props: CategoryPageProps) {
 
       {/* Mobile filter dialog */}
       <Dialog open={mobileFiltersOpen} onClose={setMobileFiltersOpen} className="relative lg:hidden" style={{ zIndex: Z_INDEX.MOBILE_FILTERS }}>
-        <DialogBackdrop
-          transition
-          className="fixed inset-0 bg-black/25 transition-opacity duration-300 ease-linear data-closed:opacity-0"
-        />
+        <DialogBackdrop transition className="fixed inset-0 bg-black/25 transition-opacity duration-300 ease-linear data-closed:opacity-0" />
 
         <div className="fixed inset-0 flex" style={{ zIndex: Z_INDEX.MOBILE_FILTERS }}>
           <DialogPanel
@@ -230,10 +235,7 @@ export default function CategoryPage(props: CategoryPageProps) {
                       <DisclosureButton className="group flex w-full items-center justify-between p-2 text-gray-400 hover:text-gray-500">
                         <span className="text-sm font-medium text-gray-900">Tags</span>
                         <span className="ml-6 flex h-7 items-center">
-                          <ChevronDownIcon
-                            aria-hidden="true"
-                            className="size-5 rotate-0 transform group-data-open:-rotate-180"
-                          />
+                          <ChevronDownIcon aria-hidden="true" className="size-5 rotate-0 transform group-data-open:-rotate-180" />
                         </span>
                       </DisclosureButton>
                     </legend>
@@ -269,13 +271,10 @@ export default function CategoryPage(props: CategoryPageProps) {
       </Dialog>
 
       {/* Collection Header */}
-      <CollectionHeader
-        title={categoryName}
-        description={categoryDescription}
-      />
+      <CollectionHeader title={categoryName} description={categoryDescription} />
 
       {/* Active Filters Bar */}
-      <ActiveFiltersBar
+      <ActiveFilters
         selectedTags={selectedTags}
         currentSort={sortBy}
         onRemoveTag={(tag) => {
@@ -297,11 +296,12 @@ export default function CategoryPage(props: CategoryPageProps) {
         <div className="pt-12 pb-24 lg:grid lg:grid-cols-4 lg:gap-x-8">
           {/* Desktop Filters Sidebar */}
           <aside>
-            <ProductFiltersSidebar
-              categories={sectionCategories}
-              currentCategory={slug}
-              filters={tagFilters}
-            />
+            <form className="hidden lg:block">
+              <CategoryList categories={sectionCategories} currentCategory={slug} />
+              {tagFilters.map((filter) => (
+                <FilterGroup key={filter.id} id={filter.id} name={filter.name} options={filter.options} onChange={filter.onChange} />
+              ))}
+            </form>
           </aside>
 
           {/* Products */}
@@ -312,10 +312,10 @@ export default function CategoryPage(props: CategoryPageProps) {
 
             {/* Sort menu */}
             <div className="flex items-center justify-end pb-4">
-              <ProductSortMenu currentSort={sortBy} onSortChange={setSortBy} />
+              <SortOptions currentSort={sortBy} onSortChange={setSortBy} />
             </div>
 
-            {isLoading ? (
+            {shouldShowLoading ? (
               <div className="flex items-center justify-center py-12">
                 <p className="text-gray-500">Loading products...</p>
               </div>
@@ -323,10 +323,7 @@ export default function CategoryPage(props: CategoryPageProps) {
               <div className="flex flex-col items-center justify-center py-12">
                 <p className="text-gray-500">No products found with selected filters.</p>
                 {selectedTags.size > 0 && (
-                  <button
-                    onClick={() => setSelectedTags(new Set())}
-                    className="mt-4 text-indigo-600 hover:text-indigo-500"
-                  >
+                  <button onClick={() => setSelectedTags(new Set())} className="mt-4 text-indigo-600 hover:text-indigo-500">
                     Clear filters
                   </button>
                 )}

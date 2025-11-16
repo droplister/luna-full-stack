@@ -8,31 +8,30 @@
 import { useState } from 'react'
 import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react'
 import { CheckIcon, XMarkIcon } from '@heroicons/react/24/outline'
-import { ScratchCard } from './scratch-card'
+import { ScratchCard } from '../cards/scratch-card'
 import { usePromoStore } from '@/lib/store/promo'
-import { promoConfig } from '@/lib/config/promo'
-import { Z_INDEX } from '@/lib/config/z-index'
+import { discountCode, revelioMessages } from '@/lib/cms'
+import { features, Z_INDEX } from '@/lib/config'
 
 export function RevelioModal() {
-  const { isRevelioOpen, closeRevelio, markAsRevealed, setPromoCode } = usePromoStore()
+  const { isRevelioOpen, closeRevelio, setPromoCode } = usePromoStore()
   const [isRevealed, setIsRevealed] = useState(false)
   const [copied, setCopied] = useState(false)
 
   const handleReveal = () => {
     setIsRevealed(true)
-    markAsRevealed()
-    setPromoCode(promoConfig.discount.code)
+    setPromoCode(discountCode.code)
   }
 
   const handleCopyCode = async () => {
     try {
       // Try modern clipboard API first
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(promoConfig.discount.code)
+        await navigator.clipboard.writeText(discountCode.code)
       } else {
         // Fallback for older browsers
         const textarea = document.createElement('textarea')
-        textarea.value = promoConfig.discount.code
+        textarea.value = discountCode.code
         textarea.style.position = 'fixed'
         textarea.style.opacity = '0'
         document.body.appendChild(textarea)
@@ -92,30 +91,30 @@ export function RevelioModal() {
               </div>
 
               <ScratchCard
-                height={promoConfig.scratchCard.height}
-                brushRadius={promoConfig.scratchCard.brushRadius}
-                revealThreshold={promoConfig.scratchCard.revealThreshold}
+                height={features.scratchCard.height}
+                brushRadius={features.scratchCard.brushRadius}
+                revealThreshold={features.scratchCard.revealThreshold}
                 onComplete={handleReveal}
               >
                 <p className="text-sm uppercase tracking-wide text-indigo-400">
-                  {promoConfig.messages.postReveal}
+                  {revelioMessages.postReveal}
                 </p>
                 <p className="text-3xl font-bold text-indigo-50 mt-2">
-                  {promoConfig.discount.description}
+                  {discountCode.description}
                 </p>
                 <button
                   onClick={handleCopyCode}
                   className="mt-4 bg-indigo-950/60 px-4 py-3 rounded-lg hover:bg-indigo-950/80 transition-colors cursor-pointer"
                 >
                   <p className="font-mono text-2xl text-indigo-100 tracking-wider">
-                    {promoConfig.discount.code}
+                    {discountCode.code}
                   </p>
                 </button>
                 <div className="mt-2 flex items-center justify-center gap-2 text-xs text-indigo-200/80">
                   {copied && (
                     <CheckIcon className="h-4 w-4 text-green-400" aria-hidden="true" />
                   )}
-                  <span>{promoConfig.messages.helperText}</span>
+                  <span>{revelioMessages.helperText}</span>
                 </div>
               </ScratchCard>
             </div>

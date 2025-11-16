@@ -6,15 +6,8 @@
 'use client'
 
 import { StarIcon } from '@heroicons/react/20/solid'
-
-interface Review {
-  id: number
-  rating: number
-  content: string
-  author: string
-  avatarSrc: string
-  avatarPosition?: { x: number; y: number }
-}
+import { StarRating } from '../ui/star-rating'
+import { ReviewCard, type Review } from '../cards/review-card'
 
 interface ReviewsData {
   average: number
@@ -39,21 +32,7 @@ export function ProductReviews({ reviews }: ProductReviewsProps) {
           <h2 className="text-2xl font-bold tracking-tight text-gray-900">Customer Reviews</h2>
 
           <div className="mt-3 flex items-center">
-            <div>
-              <div className="flex items-center">
-                {[0, 1, 2, 3, 4].map((rating) => (
-                  <StarIcon
-                    key={rating}
-                    aria-hidden="true"
-                    className={classNames(
-                      reviews.average > rating ? 'text-yellow-400' : 'text-gray-300',
-                      'size-5 shrink-0',
-                    )}
-                  />
-                ))}
-              </div>
-              <p className="sr-only">{reviews.average} out of 5 stars</p>
-            </div>
+            <StarRating rating={reviews.average} />
             <p className="ml-2 text-sm text-gray-900">Based on {reviews.totalCount} reviews</p>
           </div>
 
@@ -114,48 +93,7 @@ export function ProductReviews({ reviews }: ProductReviewsProps) {
           <div className="flow-root">
             <div className="-my-12 divide-y divide-gray-200">
               {reviews.featured.map((review) => (
-                <div key={review.id} className="py-12">
-                  <div className="flex items-center">
-                    {review.avatarPosition ? (
-                      <div
-                        className="size-12 rounded-full overflow-hidden"
-                        aria-label={`${review.author}'s avatar`}
-                      >
-                        <div
-                          className="w-full h-full"
-                          style={{
-                            backgroundImage: `url(${review.avatarSrc})`,
-                            backgroundPosition: `-${review.avatarPosition.x * 0.8}px -${review.avatarPosition.y * 0.8}px`,
-                            backgroundSize: '481.6px 481.6px',
-                          }}
-                        />
-                      </div>
-                    ) : (
-                      <img alt={`${review.author}.`} src={review.avatarSrc} className="size-12 rounded-full" />
-                    )}
-                    <div className="ml-4">
-                      <h4 className="text-sm font-bold text-gray-900">{review.author}</h4>
-                      <div className="mt-1 flex items-center">
-                        {[0, 1, 2, 3, 4].map((rating) => (
-                          <StarIcon
-                            key={rating}
-                            aria-hidden="true"
-                            className={classNames(
-                              review.rating > rating ? 'text-yellow-400' : 'text-gray-300',
-                              'size-5 shrink-0',
-                            )}
-                          />
-                        ))}
-                      </div>
-                      <p className="sr-only">{review.rating} out of 5 stars</p>
-                    </div>
-                  </div>
-
-                  <div
-                    dangerouslySetInnerHTML={{ __html: review.content }}
-                    className="mt-4 space-y-6 text-base text-gray-600 italic"
-                  />
-                </div>
+                <ReviewCard key={review.id} review={review} />
               ))}
             </div>
           </div>

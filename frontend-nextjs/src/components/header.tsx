@@ -6,7 +6,7 @@
 
 'use client'
 
-import { Fragment, useState, useEffect } from 'react'
+import { Fragment, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -25,22 +25,17 @@ import {
 } from '@headlessui/react'
 import { Bars3Icon, ShoppingBagIcon, XMarkIcon, SparklesIcon } from '@heroicons/react/24/outline'
 import { useCart } from '@/lib/hooks/useCart'
-import { brandConfig } from '@/lib/config/brand'
-import { RevelioModal } from '@/components/revelio-modal'
+import { brand, navigation, promoBar as promoBarMessage } from '@/lib/cms'
+import { RevelioModal } from '@/components/modals/revelio-modal'
+import { PromoBar } from '@/components/ui/promo-bar'
 import { usePromoStore } from '@/lib/store/promo'
-import { promoConfig } from '@/lib/config/promo'
-import { Z_INDEX } from '@/lib/config/z-index'
+import { features, Z_INDEX } from '@/lib/config'
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const { itemCount, toggleCart } = useCart()
-  const { openRevelio, initializeFromStorage } = usePromoStore()
+  const { openRevelio } = usePromoStore()
   const pathname = usePathname()
-
-  // Initialize promo from localStorage on mount
-  useEffect(() => {
-    initializeFromStorage()
-  }, [initializeFromStorage])
 
   // Don't open cart drawer if we're already on the cart page
   const handleCartClick = () => {
@@ -49,12 +44,12 @@ export function Header() {
     }
   }
 
-  const { navigation, name, tagline } = brandConfig
+  const { name } = brand
 
   return (
     <div className="bg-white">
       {/* Revelio Modal */}
-      {promoConfig.revelio.enabled && <RevelioModal />}
+      {features.revelio.enabled && <RevelioModal />}
 
       {/* Mobile menu */}
       <Dialog open={mobileMenuOpen} onClose={setMobileMenuOpen} className="relative lg:hidden" style={{ zIndex: Z_INDEX.MOBILE_MENU }}>
@@ -81,17 +76,6 @@ export function Header() {
 
             {/* Mobile Navigation Links */}
             <div className="space-y-6 border-t border-gray-200 px-4 py-6">
-              {/* Shop All */}
-              <div className="flow-root">
-                <Link
-                  href={navigation.shopAll.href}
-                  className="-m-2 block p-2 font-medium text-gray-900"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  {navigation.shopAll.name}
-                </Link>
-              </div>
-
               {/* Mega Menu Categories */}
               <TabGroup className="mt-2">
                 <div className="border-b border-gray-200">
@@ -159,20 +143,28 @@ export function Header() {
                   ))}
                 </TabPanels>
               </TabGroup>
+
+              {/* Shop All */}
+              <div className="flow-root">
+                <Link
+                  href={navigation.shopAll.href}
+                  className="-m-2 block p-2 font-medium text-gray-900"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {navigation.shopAll.name}
+                </Link>
+              </div>
             </div>
           </DialogPanel>
         </div>
       </Dialog>
 
       <header className="relative bg-white">
-        {/* Top banner */}
-        <p className="flex h-10 items-center justify-center bg-gray-900 px-4 text-sm font-medium text-white sm:px-6 lg:px-8">
-          Magical things happen to orders over $100
-        </p>
+        {features.promoBar.enabled && <PromoBar message={promoBarMessage.message} />}
 
         <nav aria-label="Top" className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="border-b border-gray-200">
-            <div className="flex h-16 items-center">
+            <div className="flex h-20 items-center">
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(true)}
@@ -196,14 +188,6 @@ export function Header() {
               {/* Desktop Flyout menus */}
               <PopoverGroup className="hidden lg:ml-8 lg:block lg:self-stretch">
                 <div className="flex h-full space-x-8">
-                  {/* Shop All - no dropdown */}
-                  <Link
-                    href={navigation.shopAll.href}
-                    className="flex items-center text-sm font-semibold text-gray-700 hover:text-gray-800"
-                  >
-                    {navigation.shopAll.name}
-                  </Link>
-
                   {/* Mega Menu Categories */}
                   {navigation.megaMenus.map((category) => (
                     <Popover key={category.name} className="flex">
@@ -278,6 +262,14 @@ export function Header() {
                     </Popover>
                   ))}
 
+                  {/* Shop All - no dropdown */}
+                  <Link
+                    href={navigation.shopAll.href}
+                    className="flex items-center text-sm font-semibold text-gray-700 hover:text-gray-800"
+                  >
+                    {navigation.shopAll.name}
+                  </Link>
+
                   {/* Additional pages */}
                   {navigation.pages.map((page) => (
                     <Link
@@ -293,16 +285,15 @@ export function Header() {
 
               <div className="ml-auto flex items-center">
                 {/* Revelio */}
-                {promoConfig.revelio.enabled && (
+                {features.revelio.enabled && (
                   <div className="flex lg:ml-6">
                     <button
                       onClick={openRevelio}
-                      className="flex items-center gap-2 p-2 text-indigo-600 hover:text-indigo-500 cursor-pointer"
+                      className="p-2 text-2xl hover:opacity-80 cursor-pointer"
                       title="Reveal a secret offer"
                       aria-label="Reveal a secret offer"
                     >
-                      <SparklesIcon aria-hidden="true" className="size-6" />
-                      <span className="text-sm font-medium">Revelio</span>
+                      🪄
                     </button>
                   </div>
                 )}

@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { LayoutContent } from "@/components/layout-content";
-import { brandConfig } from "@/lib/config/brand";
+import { LayoutContent } from "@/components/layouts/checkout-layout";
+import { generateDefaultMetadata } from "@/lib/utils/metadata";
+import { Toaster } from 'react-hot-toast';
+import { QueryProvider } from '@/lib/providers/query-provider';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,10 +16,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: `${brandConfig.name} - ${brandConfig.tagline}`,
-  description: brandConfig.tagline,
-};
+export const metadata: Metadata = generateDefaultMetadata();
 
 export default function RootLayout({
   children,
@@ -29,7 +28,33 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <LayoutContent>{children}</LayoutContent>
+        <QueryProvider>
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              duration: 3000,
+              style: {
+                background: '#363636',
+                color: '#fff',
+              },
+              success: {
+                duration: 2000,
+                iconTheme: {
+                  primary: '#10b981',
+                  secondary: '#fff',
+                },
+              },
+              error: {
+                duration: 4000,
+                iconTheme: {
+                  primary: '#ef4444',
+                  secondary: '#fff',
+                },
+              },
+            }}
+          />
+          <LayoutContent>{children}</LayoutContent>
+        </QueryProvider>
       </body>
     </html>
   );

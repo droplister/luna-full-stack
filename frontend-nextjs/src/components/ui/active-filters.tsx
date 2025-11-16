@@ -1,15 +1,15 @@
 /**
- * Active Filters Bar Component
+ * Active Filters Component
  * Displays applied filters as dismissible badges
  */
 
 'use client'
 
 import { XMarkIcon } from '@heroicons/react/20/solid'
-import type { SortOption } from './product-sort-menu'
+import type { SortOption } from './sort-options'
 import { toTitleCase } from '@/lib/utils/format'
 
-interface ActiveFiltersBarProps {
+interface ActiveFiltersProps {
   selectedTags: Set<string>
   currentSort: SortOption
   onRemoveTag: (tag: string) => void
@@ -25,13 +25,13 @@ const sortLabels: Record<SortOption, string> = {
   'discount-high': 'Best Discount',
 }
 
-export function ActiveFiltersBar({
+export function ActiveFilters({
   selectedTags,
   currentSort,
   onRemoveTag,
   onClearSort,
   onClearAll,
-}: ActiveFiltersBarProps) {
+}: ActiveFiltersProps) {
   // Only show when there are tag filters (not just sort)
   const hasTagFilters = selectedTags.size > 0
 

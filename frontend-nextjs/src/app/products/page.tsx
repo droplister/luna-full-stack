@@ -1,288 +1,45 @@
 /**
- * Products Listing Page - Shop All
- * Displays all products from configured categories (no pagination)
- * Includes tag-based filtering
+ * Products Listing Page (Server Component)
+ * Handles static generation and metadata for the shop all page
  */
 
-'use client'
+import type { Metadata } from 'next'
+import { brand } from '@/lib/cms'
+import { siteConfig } from '@/lib/config/site'
+import { ProductsPageClient } from './page.client'
 
-import { useState, useEffect, useMemo } from 'react'
-import {
-  Dialog,
-  DialogBackdrop,
-  DialogPanel,
-  Disclosure,
-  DisclosureButton,
-  DisclosurePanel,
-} from '@headlessui/react'
-import { XMarkIcon, ChevronDownIcon, FunnelIcon } from '@heroicons/react/20/solid'
-import { useProducts } from '@/lib/hooks/useProducts'
-import { useCart } from '@/lib/hooks/useCart'
-import { ProductCard } from '@/components/product-card'
-import { ProductFiltersSidebar } from '@/components/product-filters-sidebar'
-import { ProductSortMenu, type SortOption } from '@/components/product-sort-menu'
-import { ActiveFiltersBar } from '@/components/active-filters-bar'
-import { CollectionHeader } from '@/components/headers/collection-header'
-import { Breadcrumbs } from '@/components/breadcrumbs'
-import { useBreadcrumbs } from '@/lib/hooks/useBreadcrumbs'
-import { toTitleCase } from '@/lib/utils/format'
-import { Z_INDEX } from '@/lib/config/z-index'
+/**
+ * Generate metadata for SEO
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const pageTitle = `Shop All | ${brand.name}`
+  const pageDescription = `Discover our complete collection of carefully curated treasures. ${brand.tagline}`
+  const pageUrl = `${siteConfig.url}/products`
 
+  return {
+    title: pageTitle,
+    description: pageDescription,
+    openGraph: {
+      title: pageTitle,
+      description: pageDescription,
+      url: pageUrl,
+      siteName: brand.name,
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary',
+      title: pageTitle,
+      description: pageDescription,
+    },
+    alternates: {
+      canonical: pageUrl,
+    },
+  }
+}
+
+/**
+ * Products page - wraps client component
+ */
 export default function ProductsPage() {
-  const { products, total, isLoading, error, category, setCategory } = useProducts()
-  const { addItem } = useCart()
-  const breadcrumbs = useBreadcrumbs()
-  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
-  const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set())
-  const [sortBy, setSortBy] = useState<SortOption>('default')
-
-  // Extract unique tags from all products with counts
-  const tagCounts = useMemo(() => {
-    const counts = new Map<string, number>()
-    products.forEach((product) => {
-      if (product.tags && Array.isArray(product.tags)) {
-        product.tags.forEach((tag) => {
-          counts.set(tag, (counts.get(tag) || 0) + 1)
-        })
-      }
-    })
-    return counts
-  }, [products])
-
-  const availableTags = useMemo(() => {
-    // Filter out tags with less than 3 products and sort alphabetically
-    return Array.from(tagCounts.entries())
-      .filter(([_, count]) => count >= 3)
-      .map(([tag]) => tag)
-      .sort()
-  }, [tagCounts])
-
-  // Filter products by selected tags and apply sorting
-  const filteredProducts = useMemo(() => {
-    // Step 1: Filter by tags
-    const filtered = selectedTags.size === 0
-      ? products
-      : products.filter((product) => {
-          return product.tags && Array.from(selectedTags).some((tag) => product.tags!.includes(tag))
-        })
-
-    // Step 2: Sort if needed
-    if (sortBy === 'default') {
-      return filtered
-    }
-
-    return [...filtered].sort((a, b) => {
-      switch (sortBy) {
-        case 'price-low':
-          return a.price - b.price
-        case 'price-high':
-          return b.price - a.price
-        case 'rating-high':
-          return b.rating - a.rating
-        case 'discount-high':
-          return (b.discountPercentage || 0) - (a.discountPercentage || 0)
-        default:
-          return 0
-      }
-    })
-  }, [products, selectedTags, sortBy])
-
-  const handleTagToggle = (tag: string) => {
-    setSelectedTags((prev) => {
-      const newSet = new Set(prev)
-      if (newSet.has(tag)) {
-        newSet.delete(tag)
-      } else {
-        newSet.add(tag)
-      }
-      return newSet
-    })
-  }
-
-  // Prepare tag filters for sidebar with counts
-  const tagFilters = availableTags.length > 0 ? [{
-    id: 'tags',
-    name: 'Tags',
-    options: availableTags.map(tag => ({
-      value: tag,
-      label: toTitleCase(tag),
-      checked: selectedTags.has(tag),
-      count: tagCounts.get(tag) || 0,
-    })),
-    onChange: handleTagToggle,
-  }] : []
-
-  if (error) {
-    return (
-      <div className="bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
-          <div className="text-center">
-            <p className="text-red-600">Error loading products: {error}</p>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="bg-white">
-      {/* Breadcrumbs */}
-      <Breadcrumbs items={breadcrumbs} />
-
-      {/* Mobile filter dialog */}
-      <Dialog open={mobileFiltersOpen} onClose={setMobileFiltersOpen} className="relative lg:hidden" style={{ zIndex: Z_INDEX.MOBILE_FILTERS }}>
-        <DialogBackdrop
-          transition
-          className="fixed inset-0 bg-black/25 transition-opacity duration-300 ease-linear data-closed:opacity-0"
-        />
-
-        <div className="fixed inset-0 flex" style={{ zIndex: Z_INDEX.MOBILE_FILTERS }}>
-          <DialogPanel
-            transition
-            className="relative ml-auto flex size-full max-w-xs transform flex-col overflow-y-auto bg-white pt-4 pb-6 shadow-xl transition duration-300 ease-in-out data-closed:translate-x-full"
-          >
-            <div className="flex items-center justify-between px-4">
-              <h2 className="text-lg font-medium text-gray-900">Filters</h2>
-              <button
-                type="button"
-                onClick={() => setMobileFiltersOpen(false)}
-                className="relative -mr-2 flex size-10 items-center justify-center rounded-md bg-white p-2 text-gray-400 hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:outline-hidden"
-              >
-                <span className="absolute -inset-0.5" />
-                <span className="sr-only">Close menu</span>
-                <XMarkIcon aria-hidden="true" className="size-6" />
-              </button>
-            </div>
-
-            {/* Mobile Filters */}
-            {availableTags.length > 0 && (
-              <form className="mt-4">
-                <Disclosure as="div" className="border-t border-gray-200 pt-4 pb-4" defaultOpen={true}>
-                  <fieldset>
-                    <legend className="w-full px-2">
-                      <DisclosureButton className="group flex w-full items-center justify-between p-2 text-gray-400 hover:text-gray-500">
-                        <span className="text-sm font-medium text-gray-900">Tags</span>
-                        <span className="ml-6 flex h-7 items-center">
-                          <ChevronDownIcon
-                            aria-hidden="true"
-                            className="size-5 rotate-0 transform group-data-open:-rotate-180"
-                          />
-                        </span>
-                      </DisclosureButton>
-                    </legend>
-                    <DisclosurePanel className="px-4 pt-4 pb-2">
-                      <div className="space-y-6">
-                        {availableTags.map((tag) => (
-                          <div key={tag} className="flex items-center justify-between gap-3">
-                            <div className="flex gap-3 flex-1">
-                              <div className="flex h-5 shrink-0 items-center">
-                                <input
-                                  id={`mobile-tag-${tag}`}
-                                  type="checkbox"
-                                  checked={selectedTags.has(tag)}
-                                  onChange={() => handleTagToggle(tag)}
-                                  className="size-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer"
-                                />
-                              </div>
-                              <label htmlFor={`mobile-tag-${tag}`} className="text-sm text-gray-500 cursor-pointer">
-                                {toTitleCase(tag)}
-                              </label>
-                            </div>
-                            <span className="text-sm text-gray-400">{tagCounts.get(tag)}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </DisclosurePanel>
-                  </fieldset>
-                </Disclosure>
-              </form>
-            )}
-          </DialogPanel>
-        </div>
-      </Dialog>
-
-      {/* Collection Header */}
-      <CollectionHeader
-        title="Shop All"
-        description="Discover our complete collection of carefully curated treasures"
-      />
-
-      {/* Active Filters Bar */}
-      <ActiveFiltersBar
-        selectedTags={selectedTags}
-        currentSort={sortBy}
-        onRemoveTag={(tag) => {
-          setSelectedTags((prev) => {
-            const newSet = new Set(prev)
-            newSet.delete(tag)
-            return newSet
-          })
-        }}
-        onClearSort={() => setSortBy('default')}
-        onClearAll={() => {
-          setSelectedTags(new Set())
-          setSortBy('default')
-        }}
-      />
-
-      {/* Products Grid */}
-      <main className="mx-auto max-w-2xl px-4 lg:max-w-7xl lg:px-8">
-        <div className="pt-12 pb-24 lg:grid lg:grid-cols-4 lg:gap-x-8">
-          {/* Sidebar with category and tag filters */}
-          <aside>
-            <ProductFiltersSidebar
-              currentCategory={category || undefined}
-              filters={tagFilters}
-            />
-          </aside>
-
-          {/* Main content */}
-          <div className="lg:col-span-3">
-            {isLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <p className="text-gray-500">Loading products...</p>
-              </div>
-            ) : filteredProducts.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12">
-                <p className="text-gray-500">No products found with selected filters.</p>
-                {selectedTags.size > 0 && (
-                  <button
-                    onClick={() => setSelectedTags(new Set())}
-                    className="mt-4 text-indigo-600 hover:text-indigo-500"
-                  >
-                    Clear filters
-                  </button>
-                )}
-              </div>
-            ) : (
-              <>
-                {/* Product count and sort menu */}
-                <div className="flex items-center justify-between pb-4">
-                  <div className="flex items-center gap-4">
-                    <button
-                      type="button"
-                      onClick={() => setMobileFiltersOpen(true)}
-                      className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-gray-900 lg:hidden"
-                    >
-                      <FunnelIcon className="mr-2 size-5" aria-hidden="true" />
-                      Filters
-                    </button>
-                    <div className="text-sm text-gray-500">
-                      Showing {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
-                    </div>
-                  </div>
-                  <ProductSortMenu currentSort={sortBy} onSortChange={setSortBy} />
-                </div>
-                <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 lg:gap-x-8">
-                  {filteredProducts.map((product, index) => (
-                    <ProductCard key={product.id} product={product} onAddToCart={addItem} priority={index < 3} />
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      </main>
-    </div>
-  )
+  return <ProductsPageClient />
 }

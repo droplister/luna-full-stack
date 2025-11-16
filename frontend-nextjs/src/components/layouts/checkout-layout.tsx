@@ -1,9 +1,9 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { Header } from './header'
-import { Footer } from './footer'
-import { CartDrawer } from './cart-drawer'
+import { Header } from '../header'
+import { Footer } from '../footer'
+import { CartDrawer } from '../cart/cart-drawer'
 
 export function LayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()

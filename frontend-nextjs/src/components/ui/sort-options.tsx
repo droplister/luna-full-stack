@@ -1,5 +1,5 @@
 /**
- * Product Sort Menu Component
+ * Sort Options Component
  * Dropdown menu for sorting products
  */
 
@@ -23,12 +23,12 @@ const sortOptions: SortConfig[] = [
   { value: 'discount-high', label: 'Best Discount' },
 ]
 
-interface ProductSortMenuProps {
+interface SortOptionsProps {
   currentSort: SortOption
   onSortChange: (sort: SortOption) => void
 }
 
-export function ProductSortMenu({ currentSort, onSortChange }: ProductSortMenuProps) {
+export function SortOptions({ currentSort, onSortChange }: SortOptionsProps) {
   const currentLabel = sortOptions.find(opt => opt.value === currentSort)?.label || 'Sort'
 
   return (

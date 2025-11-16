@@ -5,12 +5,54 @@
 
 'use client';
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef, useMemo } from 'react';
 import { useCartStore } from '../store/cart';
 import type { Product } from '../types/products';
-import type { Cart } from '../types/cart';
+import type { Cart, CartLineItem } from '../types/cart';
+import { toast } from 'react-hot-toast';
+import { createDebouncedMap } from '../utils/debounce';
+import { cartConfig } from '../config/cart';
+import md5 from 'md5';
 
-export function useCart() {
+/**
+ * Generate line_id using MD5 hash (matches backend implementation)
+ * Backend uses: md5((string)$productId)
+ */
+function generateLineId(productId: number): string {
+  return md5(String(productId));
+}
+
+/**
+ * Return type for useCart hook
+ */
+export interface UseCartReturn {
+  // Cart data
+  items: CartLineItem[];
+  subtotal: number;
+  currency: string;
+  itemCount: number;
+
+  // UI state
+  isLoading: boolean;
+  error: string | null;
+  isCartOpen: boolean;
+
+  // Actions
+  fetchCart: () => Promise<void>;
+  addItem: (product: Product, quantity?: number) => Promise<void>;
+  updateQuantity: (lineId: string, quantity: number) => Promise<void>;
+  removeItem: (lineId: string) => Promise<void>;
+  incrementItem: (lineId: string) => Promise<void>;
+  decrementItem: (lineId: string) => Promise<void>;
+  openCart: () => void;
+  closeCart: () => void;
+  toggleCart: () => void;
+
+  // Per-item loading state
+  isItemLoading: (lineId: string) => boolean;
+}
+
+export function useCart(): UseCartReturn {
   const {
     items,
     subtotal,
@@ -24,6 +66,12 @@ export function useCart() {
     openCart,
     closeCart,
     toggleCart,
+    addLoadingItem,
+    removeLoadingItem,
+    isItemLoading,
+    snapshotState,
+    rollbackState,
+    clearSnapshot,
   } = useCartStore();
 
   /**
@@ -52,12 +100,139 @@ export function useCart() {
   }, [setCart, setLoading, setError]);
 
   /**
-   * Add product to cart
+   * Update quantity optimistically (immediate UI update, no API call)
+   */
+  const updateQuantityImmediate = useCallback((lineId: string, quantity: number) => {
+    const updatedItems = items.map((i) =>
+      i.line_id === lineId
+        ? { ...i, quantity, line_total: i.price * quantity }
+        : i
+    );
+
+    const newSubtotal = updatedItems.reduce(
+      (sum, i) => sum + i.line_total,
+      0
+    );
+
+    setCart({
+      items: updatedItems,
+      subtotal: newSubtotal,
+      currency,
+    });
+  }, [items, currency, setCart]);
+
+  /**
+   * Update quantity via API (debounced, with loading state and rollback)
+   */
+  const updateQuantityAPI = useCallback(async (lineId: string, quantity: number) => {
+    try {
+      // Mark item as loading
+      addLoadingItem(lineId);
+
+      // Call API
+      const response = await fetch(`/api/cart/${lineId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ quantity }),
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to update quantity');
+      }
+
+      const cart: Cart = await response.json();
+
+      // Update with server response
+      setCart(cart);
+      clearSnapshot();
+    } catch (err) {
+      // Rollback on error
+      rollbackState();
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update quantity';
+      toast.error(errorMessage);
+      setError(errorMessage);
+    } finally {
+      // Remove loading state
+      removeLoadingItem(lineId);
+    }
+  }, [setCart, setError, rollbackState, clearSnapshot, addLoadingItem, removeLoadingItem]);
+
+  /**
+   * Create debounced API update function per cart item
+   */
+  const debouncedAPIUpdates = useMemo(
+    () => createDebouncedMap(
+      (lineId: string, quantity: number) => {
+        updateQuantityAPI(lineId, quantity);
+      },
+      cartConfig.ux.quantityDebounceMs
+    ),
+    [updateQuantityAPI]
+  );
+
+  /**
+   * Cleanup debounced functions on unmount
+   */
+  useEffect(() => {
+    return () => {
+      debouncedAPIUpdates.cancelAll();
+    };
+  }, [debouncedAPIUpdates]);
+
+  /**
+   * Add product to cart with optimistic updates
+   * Opens drawer immediately for instant feedback
    */
   const addItem = useCallback(
     async (product: Product, quantity: number = 1) => {
+      // Generate line_id to match backend
+      const lineId = generateLineId(product.id);
+
+      // Check if item already exists
+      const existingItem = items.find((i) => i.line_id === lineId);
+
+      // Snapshot state before optimistic update
+      snapshotState();
+
+      // Create optimistic cart item
+      const priceInCents = Math.round(product.price * 100);
+      const optimisticItem: CartLineItem = {
+        line_id: lineId,
+        product_id: product.id,
+        title: product.title,
+        price: priceInCents,
+        quantity: existingItem ? existingItem.quantity + quantity : quantity,
+        stock: product.stock,
+        image: product.thumbnail,
+        brand: product.brand,
+        category: product.category,
+        sku: product.sku,
+        line_total: priceInCents * (existingItem ? existingItem.quantity + quantity : quantity),
+      };
+
+      // Optimistic UI update
+      const updatedItems = existingItem
+        ? items.map((i) => (i.line_id === lineId ? optimisticItem : i))
+        : [...items, optimisticItem];
+
+      const newSubtotal = updatedItems.reduce((sum, i) => sum + i.line_total, 0);
+
+      setCart({
+        items: updatedItems,
+        subtotal: newSubtotal,
+        currency,
+      });
+
+      // Open drawer immediately (optimistic)
+      openCart();
+
+      // Background API call
       try {
-        setLoading(true);
+        addLoadingItem(lineId);
         setError(null);
 
         const response = await fetch('/api/cart', {
@@ -74,48 +249,63 @@ export function useCart() {
         }
 
         const cart: Cart = await response.json();
+
+        // Update with server response
         setCart(cart);
-        openCart(); // Open cart drawer after adding item
+        clearSnapshot();
+
+        // Success toast
+        toast.success(`Added ${product.title} to cart`);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to add item to cart');
+        // Rollback on error
+        rollbackState();
+        const errorMessage = err instanceof Error ? err.message : 'Failed to add item to cart';
+        toast.error(errorMessage);
+        setError(errorMessage);
       } finally {
-        setLoading(false);
+        removeLoadingItem(lineId);
       }
     },
-    [setCart, setLoading, setError, openCart]
+    [items, currency, setCart, setError, openCart, snapshotState, rollbackState, clearSnapshot, addLoadingItem, removeLoadingItem]
   );
 
   /**
-   * Update cart item quantity
+   * Update cart item quantity with debounced API calls
+   * (Public API - can be called directly from dropdown selects)
    */
   const updateQuantity = useCallback(
     async (lineId: string, quantity: number) => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const response = await fetch(`/api/cart/${lineId}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ quantity }),
-          credentials: 'include',
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to update quantity');
-        }
-
-        const cart: Cart = await response.json();
-        setCart(cart);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to update quantity');
-      } finally {
-        setLoading(false);
+      // Find the item to validate
+      const item = items.find((i) => i.line_id === lineId);
+      if (!item) {
+        toast.error('Item not found in cart');
+        return;
       }
+
+      // Validate stock limit
+      if (quantity > item.stock) {
+        toast.error(`Only ${item.stock} available`);
+        return;
+      }
+
+      // Validate minimum quantity
+      if (quantity < 0) {
+        return;
+      }
+
+      // Snapshot state before first update (if not already loading)
+      if (!isItemLoading(lineId)) {
+        snapshotState();
+      }
+
+      // 1. Immediate UI update
+      updateQuantityImmediate(lineId, quantity);
+
+      // 2. Debounced API call
+      const debouncedUpdate = debouncedAPIUpdates.get(lineId);
+      debouncedUpdate(quantity);
     },
-    [setCart, setLoading, setError]
+    [items, isItemLoading, snapshotState, updateQuantityImmediate, debouncedAPIUpdates]
   );
 
   /**
@@ -123,6 +313,9 @@ export function useCart() {
    */
   const removeItem = useCallback(
     async (lineId: string) => {
+      // Cancel any pending quantity updates for this item
+      debouncedAPIUpdates.cancel(lineId);
+
       try {
         setLoading(true);
         setError(null);
@@ -144,18 +337,24 @@ export function useCart() {
         setLoading(false);
       }
     },
-    [setCart, setLoading, setError]
+    [setCart, setLoading, setError, debouncedAPIUpdates]
   );
 
   /**
-   * Increment item quantity
+   * Increment item quantity with stock validation
    */
   const incrementItem = useCallback(
     async (lineId: string) => {
       const item = items.find((i) => i.line_id === lineId);
-      if (item) {
-        await updateQuantity(lineId, item.quantity + 1);
+      if (!item) return;
+
+      // Check stock limit before incrementing
+      if (item.quantity >= item.stock) {
+        toast.error('Maximum stock reached');
+        return;
       }
+
+      await updateQuantity(lineId, item.quantity + 1);
     },
     [items, updateQuantity]
   );
@@ -204,5 +403,8 @@ export function useCart() {
     openCart,
     closeCart,
     toggleCart,
+
+    // Per-item loading state
+    isItemLoading,
   };
 }
