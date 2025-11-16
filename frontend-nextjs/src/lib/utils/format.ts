@@ -27,19 +27,37 @@ export function formatCategory(slug: string): string {
 }
 
 /**
- * Format price in cents to dollars
- * @example formatPrice(999) => '$9.99'
+ * Convert price from cents to dollars
+ * @example centsToDollars(999) => 9.99
  */
-export function formatPrice(cents: number): string {
-  return `$${(cents / 100).toFixed(2)}`
+export function centsToDollars(cents: number): number {
+  return cents / 100
 }
 
 /**
- * Format price in dollars
- * @example formatDollars(9.99) => '$9.99'
+ * Format price in cents to currency string
+ * @example formatPrice(999) => '$9.99'
+ * @example formatPrice(999, 'EUR') => '€9.99'
  */
-export function formatDollars(dollars: number): string {
-  return `$${dollars.toFixed(2)}`
+export function formatPrice(cents: number, currency: string = 'USD'): string {
+  const dollars = centsToDollars(cents)
+
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+  }).format(dollars)
+}
+
+/**
+ * Format price in dollars to currency string
+ * @example formatDollars(9.99) => '$9.99'
+ * @example formatDollars(9.99, 'EUR') => '€9.99'
+ */
+export function formatDollars(dollars: number, currency: string = 'USD'): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+  }).format(dollars)
 }
 
 /**

@@ -7,6 +7,16 @@ import { create } from 'zustand';
 import type { Cart, CartLineItem } from '../types/cart';
 
 /**
+ * Snapshot of cart state for rollback (includes version)
+ */
+interface CartSnapshot {
+  items: CartLineItem[];
+  subtotal: number;
+  currency: string;
+  stateVersion: number;
+}
+
+/**
  * Cart Store State Interface
  * Exported for testing and type inference
  */
@@ -23,10 +33,14 @@ export interface CartState {
   isCartOpen: boolean;
 
   // Optimistic update rollback
-  previousState: Cart | null;
+  previousState: CartSnapshot | null;
+
+  // Version tracking for optimistic updates
+  stateVersion: number; // Increments on each optimistic update to prevent stale server responses
 
   // Actions
   setCart: (cart: Cart) => void;
+  setCartIfCurrent: (cart: Cart, expectedVersion: number) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   openCart: () => void;
@@ -55,14 +69,35 @@ export const useCartStore = create<CartState>((set, get) => ({
   error: null,
   isCartOpen: false,
   previousState: null,
+  stateVersion: 0,
 
-  // Update cart from API response
+  // Update cart from API response (increments version for optimistic updates)
   setCart: (cart: Cart) =>
-    set({
+    set((state) => ({
       items: cart.items,
       subtotal: cart.subtotal,
       currency: cart.currency,
       error: null,
+      stateVersion: state.stateVersion + 1,
+    })),
+
+  // Update cart only if version matches (prevents stale server responses from regressing state)
+  setCartIfCurrent: (cart: Cart, expectedVersion: number) =>
+    set((state) => {
+      // If state has been updated since this request was made, ignore this response
+      if (state.stateVersion !== expectedVersion) {
+        console.debug(
+          `[Cart] Ignoring stale server response (expected v${expectedVersion}, current v${state.stateVersion})`
+        );
+        return {};
+      }
+
+      return {
+        items: cart.items,
+        subtotal: cart.subtotal,
+        currency: cart.currency,
+        error: null,
+      };
     }),
 
   // Loading state
@@ -87,6 +122,7 @@ export const useCartStore = create<CartState>((set, get) => ({
       error: null,
       loadingItems: new Set<string>(),
       previousState: null,
+      stateVersion: 0,
     }),
 
   // Per-item loading management
@@ -115,6 +151,7 @@ export const useCartStore = create<CartState>((set, get) => ({
         items: state.items,
         subtotal: state.subtotal,
         currency: state.currency,
+        stateVersion: state.stateVersion,
       },
     })),
 
@@ -125,6 +162,7 @@ export const useCartStore = create<CartState>((set, get) => ({
         items: state.previousState.items,
         subtotal: state.previousState.subtotal,
         currency: state.previousState.currency,
+        stateVersion: state.previousState.stateVersion,
         previousState: null,
       };
     }),

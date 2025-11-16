@@ -5,6 +5,7 @@
 
 'use client'
 
+import { memo, useMemo } from 'react'
 import Link from 'next/link'
 import { useRelatedProducts } from '@/lib/hooks/useProducts'
 import { RelatedProductCard } from '../cards/related-product-card'
@@ -21,7 +22,7 @@ interface RelatedProductsProps {
   onAddToCart?: (product: Product) => Promise<void>
 }
 
-export function RelatedProducts({
+export const RelatedProducts = memo(function RelatedProducts({
   category,
   currentProductId,
   excludeProductIds = [],
@@ -34,9 +35,12 @@ export function RelatedProducts({
   const { products } = useRelatedProducts(category, currentProductId, limit + excludeProductIds.length)
 
   // Filter out products that are in the exclude list
-  const filteredProducts = products
-    .filter(p => !excludeProductIds.includes(p.id))
-    .slice(0, limit)
+  // Memoize to prevent recalculation when excludeProductIds array reference changes but values are the same
+  const filteredProducts = useMemo(() => {
+    return products
+      .filter(p => !excludeProductIds.includes(p.id))
+      .slice(0, limit)
+  }, [products, excludeProductIds, limit])
 
   if (filteredProducts.length === 0) {
     return null
@@ -80,4 +84,4 @@ export function RelatedProducts({
       </div>
     </div>
   )
-}
+})

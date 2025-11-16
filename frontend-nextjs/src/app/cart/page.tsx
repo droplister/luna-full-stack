@@ -1,5 +1,6 @@
 'use client'
 
+import { useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import { RelatedProducts } from '@/components/sections/related-products'
 import { Breadcrumbs } from '@/components/ui/breadcrumbs'
@@ -8,6 +9,7 @@ import { OrderSummary } from '@/components/cart/order-summary'
 import { EmptyCart } from '@/components/cart/empty-cart'
 import { useCart } from '@/lib/hooks/useCart'
 import { calculateShipping, calculateTax } from '@/lib/config/cart'
+import type { Product } from '@/lib/types/products'
 
 export default function CartPage() {
   const { items, subtotal, currency, isLoading, isItemLoading, incrementItem, decrementItem, removeItem, addItem } = useCart()
@@ -25,12 +27,14 @@ export default function CartPage() {
   const lastItemCategory = items.length > 0 ? items[items.length - 1].category : undefined
 
   // Get product IDs in cart to exclude from related products
-  const cartProductIds = items.map(item => item.product_id)
+  // Memoize to prevent array recreation on every render
+  const cartProductIds = useMemo(() => items.map(item => item.product_id), [items])
 
   // Add to cart without opening drawer (we're already on cart page)
-  const handleAddToCart = async (product: Product) => {
+  // Memoize to prevent function recreation on every render
+  const handleAddToCart = useCallback(async (product: Product) => {
     await addItem(product, 1, false) // Don't open drawer
-  }
+  }, [addItem])
 
   const breadcrumbs = [
     { name: 'Home', href: '/' },

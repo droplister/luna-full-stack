@@ -6,7 +6,7 @@
 
 import Link from 'next/link'
 import { QuestionMarkCircleIcon } from '@heroicons/react/20/solid'
-import { formatPrice } from '@/lib/services/cart'
+import { formatPrice } from '@/lib/utils/format'
 
 interface OrderSummaryProps {
   subtotal: number

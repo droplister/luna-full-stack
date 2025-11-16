@@ -62,29 +62,3 @@ export async function updateCartItemQuantity(lineId: string, quantity: number, c
 export async function removeCartItem(lineId: string, cookieHeader?: string): Promise<FetchResult<Cart>> {
   return removeCartLine(lineId, cookieHeader);
 }
-
-/**
- * Helper: Convert price from cents to dollars for display
- *
- * @param cents - Price in cents
- * @returns Price in dollars
- */
-export function centsToDollars(cents: number): number {
-  return cents / 100;
-}
-
-/**
- * Helper: Format price for display
- *
- * @param cents - Price in cents
- * @param currency - Currency code (default: USD)
- * @returns Formatted price string
- */
-export function formatPrice(cents: number, currency: string = 'USD'): string {
-  const dollars = centsToDollars(cents);
-
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-  }).format(dollars);
-}

@@ -3,7 +3,7 @@
  * Shows progress bar toward free shipping threshold
  */
 
-import { formatPrice } from '@/lib/services/cart'
+import { formatPrice } from '@/lib/utils/format'
 import { cartConfig } from '@/lib/config/cart'
 
 interface FreeShippingProgressProps {

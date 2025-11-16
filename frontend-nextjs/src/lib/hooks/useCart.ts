@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useEffect, useCallback, useRef, useMemo } from 'react';
+import { useEffect, useCallback, useRef, useMemo, startTransition } from 'react';
 import { useCartStore } from '../store/cart';
 import type { Product } from '../types/products';
 import type { Cart, CartLineItem } from '../types/cart';
@@ -60,7 +60,9 @@ export function useCart(): UseCartReturn {
     isLoading,
     error,
     isCartOpen,
+    stateVersion,
     setCart,
+    setCartIfCurrent,
     setLoading,
     setError,
     openCart,
@@ -125,6 +127,9 @@ export function useCart(): UseCartReturn {
    * Update quantity via API (debounced, with loading state and rollback)
    */
   const updateQuantityAPI = useCallback(async (lineId: string, quantity: number) => {
+    // Capture current version (for race condition prevention)
+    const expectedVersion = useCartStore.getState().stateVersion; // Get fresh version from store
+
     try {
       // Mark item as loading
       addLoadingItem(lineId);
@@ -146,9 +151,11 @@ export function useCart(): UseCartReturn {
 
       const cart: Cart = await response.json();
 
-      // Update with server response
-      setCart(cart);
-      clearSnapshot();
+      // Update with server response only if state hasn't changed (prevents race conditions)
+      startTransition(() => {
+        setCartIfCurrent(cart, expectedVersion);
+        clearSnapshot();
+      });
     } catch (err) {
       // Rollback on error
       rollbackState();
@@ -159,7 +166,7 @@ export function useCart(): UseCartReturn {
       // Remove loading state
       removeLoadingItem(lineId);
     }
-  }, [setCart, setError, rollbackState, clearSnapshot, addLoadingItem, removeLoadingItem]);
+  }, [setCartIfCurrent, setError, rollbackState, clearSnapshot, addLoadingItem, removeLoadingItem]);
 
   /**
    * Create debounced API update function per cart item
@@ -227,6 +234,9 @@ export function useCart(): UseCartReturn {
         currency,
       });
 
+      // Capture version after optimistic update (for race condition prevention)
+      const expectedVersion = useCartStore.getState().stateVersion; // Get fresh version from store
+
       // Open drawer immediately (optimistic) - only if openDrawer is true
       if (openDrawer) {
         openCart();
@@ -252,9 +262,11 @@ export function useCart(): UseCartReturn {
 
         const cart: Cart = await response.json();
 
-        // Update with server response
-        setCart(cart);
-        clearSnapshot();
+        // Update with server response only if state hasn't changed (prevents race conditions)
+        startTransition(() => {
+          setCartIfCurrent(cart, expectedVersion);
+          clearSnapshot();
+        });
       } catch (err) {
         // Rollback on error
         rollbackState();
@@ -265,7 +277,7 @@ export function useCart(): UseCartReturn {
         removeLoadingItem(lineId);
       }
     },
-    [items, currency, setCart, setError, openCart, snapshotState, rollbackState, clearSnapshot, addLoadingItem, removeLoadingItem]
+    [items, currency, setCart, setCartIfCurrent, setError, openCart, snapshotState, rollbackState, clearSnapshot, addLoadingItem, removeLoadingItem]
   );
 
   /**
@@ -308,15 +320,32 @@ export function useCart(): UseCartReturn {
   );
 
   /**
-   * Remove item from cart
+   * Remove item from cart with optimistic updates
    */
   const removeItem = useCallback(
     async (lineId: string) => {
       // Cancel any pending quantity updates for this item
       debouncedAPIUpdates.cancel(lineId);
 
+      // Snapshot state before optimistic update
+      snapshotState();
+
+      // Optimistic UI update - remove item immediately
+      const updatedItems = items.filter((i) => i.line_id !== lineId);
+      const newSubtotal = updatedItems.reduce((sum, i) => sum + i.line_total, 0);
+
+      setCart({
+        items: updatedItems,
+        subtotal: newSubtotal,
+        currency,
+      });
+
+      // Capture version after optimistic update (for race condition prevention)
+      const expectedVersion = useCartStore.getState().stateVersion; // Get fresh version from store
+
+      // Background API call
       try {
-        setLoading(true);
+        addLoadingItem(lineId);
         setError(null);
 
         const response = await fetch(`/api/cart/${lineId}`, {
@@ -329,14 +358,23 @@ export function useCart(): UseCartReturn {
         }
 
         const cart: Cart = await response.json();
-        setCart(cart);
+
+        // Update with server response only if state hasn't changed (prevents race conditions)
+        startTransition(() => {
+          setCartIfCurrent(cart, expectedVersion);
+          clearSnapshot();
+        });
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to remove item');
+        // Rollback on error
+        rollbackState();
+        const errorMessage = err instanceof Error ? err.message : 'Failed to remove item';
+        toast.error(errorMessage);
+        setError(errorMessage);
       } finally {
-        setLoading(false);
+        removeLoadingItem(lineId);
       }
     },
-    [setCart, setLoading, setError, debouncedAPIUpdates]
+    [items, currency, setCart, setCartIfCurrent, setError, snapshotState, rollbackState, clearSnapshot, addLoadingItem, removeLoadingItem, debouncedAPIUpdates]
   );
 
   /**
@@ -360,16 +398,21 @@ export function useCart(): UseCartReturn {
 
   /**
    * Decrement item quantity
-   * Setting quantity to 0 will remove the item from cart (backend behavior)
+   * If quantity would reach 0, uses optimistic remove instead
    */
   const decrementItem = useCallback(
     async (lineId: string) => {
       const item = items.find((i) => i.line_id === lineId);
-      if (item) {
+      if (!item) return;
+
+      // If decrementing to 0, use optimistic remove for instant feedback
+      if (item.quantity === 1) {
+        await removeItem(lineId);
+      } else {
         await updateQuantity(lineId, item.quantity - 1);
       }
     },
-    [items, updateQuantity]
+    [items, updateQuantity, removeItem]
   );
 
   // Load cart on mount
