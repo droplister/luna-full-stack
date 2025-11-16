@@ -155,26 +155,34 @@ export function useRelatedProducts(
   currentProductId: number | undefined,
   limit: number = 4
 ): UseRelatedProductsReturn {
-  // Reuse the products query cache
+  // Fetch from dedicated collections endpoint
   const {
     data,
     isLoading,
     error,
     refetch,
   } = useQuery({
-    queryKey: ['products'], // Same cache key as useProducts
-    queryFn: fetchProducts,
+    queryKey: ['collections', category], // Collection-specific cache key
+    queryFn: async () => {
+      if (!category) return { products: [], total: 0 };
+
+      const response = await fetch(`/api/collections/${encodeURIComponent(category)}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch related products');
+      }
+      return response.json();
+    },
     enabled: !!category, // Only fetch if category exists
     staleTime: 60 * 1000,
     gcTime: 5 * 60 * 1000,
   });
 
-  // Filter by category and exclude current product (client-side)
+  // Filter to exclude current product (client-side)
   const relatedProducts = useMemo(() => {
     if (!data?.products || !category) return [];
 
     return data.products
-      .filter(p => p.category === category && p.id !== currentProductId)
+      .filter(p => p.id !== currentProductId)
       .slice(0, limit);
   }, [data?.products, category, currentProductId, limit]);
 

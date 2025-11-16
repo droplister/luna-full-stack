@@ -9,6 +9,7 @@ import { ChevronUpIcon } from '@heroicons/react/20/solid'
 import { Popover, PopoverBackdrop, PopoverButton, PopoverPanel } from '@headlessui/react'
 import { formatPrice } from '@/lib/services/cart'
 import type { CartLineItem } from '@/lib/types/cart'
+import { kebabToTitleCase } from '@/lib/utils/format'
 
 interface CheckoutOrderSummaryProps {
   items: CartLineItem[]
@@ -54,7 +55,7 @@ export function CheckoutOrderSummary({
               <div className="flex-auto space-y-1">
                 <h3>{item.title}</h3>
                 {item.brand && <p className="text-gray-500">{item.brand}</p>}
-                {item.category && <p className="text-gray-500">{item.category}</p>}
+                {item.category && <p className="text-gray-500">{kebabToTitleCase(item.category)}</p>}
                 <p className="text-gray-500">Qty: {item.quantity}</p>
               </div>
               <p className="flex-none text-base font-medium">{formatPrice(item.line_total, currency)}</p>

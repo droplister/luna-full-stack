@@ -27,7 +27,8 @@ export async function generateProductStaticParams() {
       throw new Error(`Failed to fetch products: ${response.status}`)
     }
 
-    const products: Product[] = await response.json()
+    const data = await response.json()
+    const products: Product[] = data.products || []
 
     // Generate slug-based params for each product
     return products.map((product) => ({

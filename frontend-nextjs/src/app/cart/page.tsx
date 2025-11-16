@@ -10,7 +10,7 @@ import { useCart } from '@/lib/hooks/useCart'
 import { calculateShipping, calculateTax } from '@/lib/config/cart'
 
 export default function CartPage() {
-  const { items, subtotal, currency, isLoading, isItemLoading, updateQuantity, removeItem } = useCart()
+  const { items, subtotal, currency, isLoading, isItemLoading, incrementItem, decrementItem, removeItem, addItem } = useCart()
 
   // Calculate shipping and tax
   const shipping = calculateShipping(subtotal)
@@ -20,6 +20,17 @@ export default function CartPage() {
   const total = subtotal + shipping + tax
 
   const isEmpty = items.length === 0
+
+  // Get category from last item in cart for related products
+  const lastItemCategory = items.length > 0 ? items[items.length - 1].category : undefined
+
+  // Get product IDs in cart to exclude from related products
+  const cartProductIds = items.map(item => item.product_id)
+
+  // Add to cart without opening drawer (we're already on cart page)
+  const handleAddToCart = async (product: Product) => {
+    await addItem(product, 1, false) // Don't open drawer
+  }
 
   const breadcrumbs = [
     { name: 'Home', href: '/' },
@@ -43,16 +54,16 @@ export default function CartPage() {
               </h2>
 
               <ul role="list" className="divide-y divide-gray-200 border-t border-b border-gray-200">
-                {items.map((item, itemIdx) => (
+                {items.map((item) => (
                   <CartLineItem
                     key={item.line_id}
                     item={item}
                     currency={currency}
-                    variant="full"
+                    variant="compact"
                     isLoading={isItemLoading(item.line_id)}
-                    onUpdateQuantity={updateQuantity}
+                    onIncrement={incrementItem}
+                    onDecrement={decrementItem}
                     onRemove={removeItem}
-                    itemIdx={itemIdx}
                   />
                 ))}
               </ul>
@@ -69,16 +80,17 @@ export default function CartPage() {
           </div>
         )}
 
-        {/* Related products */}
-        {!isEmpty && (
-          <section aria-labelledby="related-heading" className="mt-24">
-            <h2 id="related-heading" className="text-lg font-medium text-gray-900">
-              You may also like&hellip;
-            </h2>
-            <div className="mt-6">
-              <RelatedProducts limit={4} />
-            </div>
-          </section>
+        {/* Related products based on last item in cart */}
+        {!isEmpty && lastItemCategory && (
+          <RelatedProducts
+            category={lastItemCategory}
+            excludeProductIds={cartProductIds}
+            limit={4}
+            title="You may also like"
+            showBackground={false}
+            showAddToCart={true}
+            onAddToCart={handleAddToCart}
+          />
         )}
       </div>
     </>

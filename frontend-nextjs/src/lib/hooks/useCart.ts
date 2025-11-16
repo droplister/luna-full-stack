@@ -185,10 +185,10 @@ export function useCart(): UseCartReturn {
 
   /**
    * Add product to cart with optimistic updates
-   * Opens drawer immediately for instant feedback
+   * Opens drawer immediately for instant feedback (unless openDrawer is false)
    */
   const addItem = useCallback(
-    async (product: Product, quantity: number = 1) => {
+    async (product: Product, quantity: number = 1, openDrawer: boolean = true) => {
       // Generate line_id to match backend
       const lineId = generateLineId(product.id);
 
@@ -227,8 +227,10 @@ export function useCart(): UseCartReturn {
         currency,
       });
 
-      // Open drawer immediately (optimistic)
-      openCart();
+      // Open drawer immediately (optimistic) - only if openDrawer is true
+      if (openDrawer) {
+        openCart();
+      }
 
       // Background API call
       try {
