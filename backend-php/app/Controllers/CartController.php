@@ -33,6 +33,10 @@ class CartController extends ResourceController
     public function index()
     {
         $cart = $this->getCartFromSession();
+
+        // Enrich cart items with fresh stock data
+        $cart = $this->enrichCartWithStock($cart);
+
         return $this->respond($cart);
     }
 
@@ -72,6 +76,19 @@ class CartController extends ResourceController
             ], 400);
         }
 
+        // Fetch product to validate stock
+        $product = $this->fetchProductFromAPI($request->product_id);
+
+        if (!$product) {
+            return $this->fail([
+                'status' => 404,
+                'message' => 'Product not found',
+                'description' => 'The requested product does not exist'
+            ], 404);
+        }
+
+        $availableStock = (int) ($product['stock'] ?? 0);
+
         $cart = $this->getCartFromSession();
 
         // Generate line ID to check if line already exists
@@ -79,19 +96,39 @@ class CartController extends ResourceController
 
         $existingIndex = $this->findLineIndex($cart['items'], $lineId);
 
+        // Calculate new total quantity (existing + new)
+        $newTotalQuantity = $request->quantity;
+        if ($existingIndex !== false) {
+            $newTotalQuantity += $cart['items'][$existingIndex]['quantity'];
+        }
+
+        // Validate stock limit
+        if ($newTotalQuantity > $availableStock) {
+            return $this->fail([
+                'status' => 422,
+                'message' => "Only {$availableStock} available in stock",
+                'description' => "Cannot add {$request->quantity} items. Only {$availableStock} available."
+            ], 422);
+        }
+
         if ($existingIndex !== false) {
             // Update existing line quantity
             $item = &$cart['items'][$existingIndex];
-            $item['quantity'] += $request->quantity;
+            $item['quantity'] = $newTotalQuantity;
+            $item['stock'] = $availableStock;
             $item['line_total'] = $item['price'] * $item['quantity'];
         } else {
             // Add new line
             $newLine = $this->buildCartLine($request);
+            $newLine['stock'] = $availableStock; // Ensure fresh stock
             $cart['items'][] = $newLine;
         }
 
         // Recalculate totals
         $cart = $this->recalculateCart($cart);
+
+        // Enrich with stock before responding
+        $cart = $this->enrichCartWithStock($cart);
 
         // Save to session
         $this->saveCartToSession($cart);
@@ -146,14 +183,43 @@ class CartController extends ResourceController
         if ($request->quantity <= 0) {
             array_splice($cart['items'], $lineIndex, 1);
         } else {
+            // Get product_id from cart item
+            $productId = $cart['items'][$lineIndex]['product_id'];
+
+            // Fetch product to validate stock
+            $product = $this->fetchProductFromAPI($productId);
+
+            if (!$product) {
+                return $this->fail([
+                    'status' => 404,
+                    'message' => 'Product not found',
+                    'description' => 'The requested product does not exist'
+                ], 404);
+            }
+
+            $availableStock = (int) ($product['stock'] ?? 0);
+
+            // Validate stock limit
+            if ($request->quantity > $availableStock) {
+                return $this->fail([
+                    'status' => 422,
+                    'message' => "Only {$availableStock} available in stock",
+                    'description' => "Cannot update to {$request->quantity}. Only {$availableStock} available."
+                ], 422);
+            }
+
             // Update quantity
             $item = &$cart['items'][$lineIndex];
             $item['quantity'] = $request->quantity;
+            $item['stock'] = $availableStock;
             $item['line_total'] = $item['price'] * $request->quantity;
         }
 
         // Recalculate totals
         $cart = $this->recalculateCart($cart);
+
+        // Enrich with stock before responding
+        $cart = $this->enrichCartWithStock($cart);
 
         // Save to session
         $this->saveCartToSession($cart);
@@ -193,6 +259,9 @@ class CartController extends ResourceController
 
         // Recalculate totals
         $cart = $this->recalculateCart($cart);
+
+        // Enrich with stock before responding
+        $cart = $this->enrichCartWithStock($cart);
 
         // Save to session
         $this->saveCartToSession($cart);
@@ -247,12 +316,16 @@ class CartController extends ResourceController
         // Line ID derived from product_id so each product maps to a single cart line
         $lineId = $this->generateLineId($request->product_id);
 
+        // Get stock from request (passed from frontend) or default to 0
+        $stock = $request->stock ?? 0;
+
         return [
             'line_id' => $lineId,                   // MD5 hash for unique identification
             'product_id' => $request->product_id,   // DummyJSON product ID
             'title' => $request->title ?? 'Product',
             'price' => $priceInCents,               // Price in cents
             'quantity' => $quantity,
+            'stock' => (int) $stock,                // Available inventory
             'image' => $request->image ?? $request->thumbnail ?? '',
             'brand' => $request->brand ?? null,
             'category' => $request->category ?? null,
@@ -302,6 +375,60 @@ class CartController extends ResourceController
     private function generateLineId(int $productId): string
     {
         return md5((string)$productId);
+    }
+
+    /**
+     * Fetch product data from DummyJSON API
+     * Returns product details including stock
+     *
+     * @param int $productId DummyJSON product ID
+     * @return array|null Product data or null if not found
+     */
+    private function fetchProductFromAPI(int $productId): ?array
+    {
+        $apiUrl = "https://dummyjson.com/products/{$productId}";
+
+        $curl = curl_init();
+        curl_setopt_array($curl, [
+            CURLOPT_URL => $apiUrl,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 5,
+            CURLOPT_FOLLOWLOCATION => true,
+        ]);
+
+        $response = curl_exec($curl);
+        $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        curl_close($curl);
+
+        if ($httpCode === 200 && $response) {
+            $product = json_decode($response, true);
+            return $product;
+        }
+
+        return null;
+    }
+
+    /**
+     * Enrich cart items with fresh stock data from DummyJSON
+     * Called when retrieving cart to ensure stock is current
+     *
+     * @param array $cart Cart array with items
+     * @return array Cart with stock data added to each item
+     */
+    private function enrichCartWithStock(array $cart): array
+    {
+        foreach ($cart['items'] as &$item) {
+            $product = $this->fetchProductFromAPI($item['product_id']);
+
+            if ($product && isset($product['stock'])) {
+                $item['stock'] = (int) $product['stock'];
+            } else {
+                // Fallback: If API fails, set stock to 0 (safe default)
+                $item['stock'] = 0;
+            }
+        }
+
+        return $cart;
     }
 
     /**

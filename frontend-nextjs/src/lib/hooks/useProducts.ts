@@ -1,11 +1,13 @@
 /**
  * useProducts Hook
- * Provides product fetching (no pagination - fetches all ~40 products from configured categories)
+ * Provides product fetching with React Query for caching and request deduplication
+ * No pagination - fetches all ~40 products from configured categories
  */
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import type { Product } from '../types/products';
 
 interface ProductsResponse {
@@ -13,57 +15,58 @@ interface ProductsResponse {
   total: number;
 }
 
-export function useProducts() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [total, setTotal] = useState(0);
+/**
+ * Fetch all products from API
+ */
+async function fetchProducts(): Promise<ProductsResponse> {
+  const response = await fetch('/api/products');
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch products');
+  }
+
+  return response.json();
+}
+
+/**
+ * Return type for useProducts hook
+ */
+export interface UseProductsReturn {
+  products: Product[];
+  total: number;
+  category: string | null;
+  setCategory: (category: string | null) => void;
+  isLoading: boolean;
+  error: string | null;
+  refetch: () => void;
+}
+
+export function useProducts(): UseProductsReturn {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  /**
-   * Fetch all products from configured categories
-   */
-  const fetchProducts = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      const response = await fetch('/api/products');
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch products');
-      }
-
-      const data: ProductsResponse = await response.json();
-
-      setProducts(data.products);
-      setTotal(data.total);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch products');
-      setProducts([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  // Fetch products on mount
-  useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+  // Use React Query for automatic caching and request deduplication
+  const {
+    data,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ['products'], // Cache key
+    queryFn: fetchProducts,
+    staleTime: 60 * 1000, // Consider data fresh for 1 minute
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+  });
 
   /**
    * Filter products by category (client-side)
    */
-  const filteredProducts = selectedCategory
-    ? products.filter(p => p.category === selectedCategory)
-    : products;
+  const filteredProducts = useMemo(() => {
+    if (!data?.products) return [];
 
-  /**
-   * Change category filter
-   */
-  const setCategory = useCallback((category: string | null) => {
-    setSelectedCategory(category);
-  }, []);
+    return selectedCategory
+      ? data.products.filter(p => p.category === selectedCategory)
+      : data.products;
+  }, [data?.products, selectedCategory]);
 
   return {
     // Product data
@@ -72,107 +75,113 @@ export function useProducts() {
 
     // Filtering
     category: selectedCategory,
-    setCategory,
+    setCategory: setSelectedCategory,
 
     // UI state
     isLoading,
-    error,
+    error: error instanceof Error ? error.message : null,
 
     // Actions
-    refetch: fetchProducts,
+    refetch: () => { refetch(); },
   };
 }
 
 /**
- * useProduct Hook
  * Fetch a single product by ID
  */
-export function useProduct(id: number) {
-  const [product, setProduct] = useState<Product | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+async function fetchProduct(id: number): Promise<Product> {
+  const response = await fetch(`/api/products/${id}`);
 
-  const fetchProduct = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
+  if (!response.ok) {
+    throw new Error('Failed to fetch product');
+  }
 
-      const response = await fetch(`/api/products/${id}`);
+  return response.json();
+}
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch product');
-      }
+/**
+ * Return type for useProduct hook
+ */
+export interface UseProductReturn {
+  product: Product | null;
+  isLoading: boolean;
+  error: string | null;
+  refetch: () => void;
+}
 
-      const data: Product = await response.json();
-      setProduct(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch product');
-      setProduct(null);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [id]);
-
-  useEffect(() => {
-    if (id) {
-      fetchProduct();
-    }
-  }, [id, fetchProduct]);
-
-  return {
-    product,
+/**
+ * useProduct Hook
+ * Fetch a single product by ID with React Query caching
+ */
+export function useProduct(id: number): UseProductReturn {
+  const {
+    data: product,
     isLoading,
     error,
-    refetch: fetchProduct,
+    refetch,
+  } = useQuery({
+    queryKey: ['product', id], // Cache key includes ID
+    queryFn: () => fetchProduct(id),
+    enabled: !!id, // Only fetch if ID exists
+    staleTime: 2 * 60 * 1000, // Product details are fresh for 2 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+  });
+
+  return {
+    product: product || null,
+    isLoading,
+    error: error instanceof Error ? error.message : null,
+    refetch: () => { refetch(); },
   };
+}
+
+/**
+ * Return type for useRelatedProducts hook
+ */
+export interface UseRelatedProductsReturn {
+  products: Product[];
+  isLoading: boolean;
+  error: string | null;
+  refetch: () => void;
 }
 
 /**
  * useRelatedProducts Hook
  * Fetch products from the same category, excluding the current product
+ * Uses the same products query cache for efficiency
  */
-export function useRelatedProducts(category: string | undefined, currentProductId: number | undefined, limit: number = 4) {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchRelatedProducts = useCallback(async () => {
-    if (!category) return;
-
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      const response = await fetch('/api/products');
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch related products');
-      }
-
-      const data: ProductsResponse = await response.json();
-
-      // Filter by category and exclude current product
-      const related = data.products
-        .filter(p => p.category === category && p.id !== currentProductId)
-        .slice(0, limit);
-
-      setProducts(related);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch related products');
-      setProducts([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [category, currentProductId, limit]);
-
-  useEffect(() => {
-    fetchRelatedProducts();
-  }, [fetchRelatedProducts]);
-
-  return {
-    products,
+export function useRelatedProducts(
+  category: string | undefined,
+  currentProductId: number | undefined,
+  limit: number = 4
+): UseRelatedProductsReturn {
+  // Reuse the products query cache
+  const {
+    data,
     isLoading,
     error,
-    refetch: fetchRelatedProducts,
+    refetch,
+  } = useQuery({
+    queryKey: ['products'], // Same cache key as useProducts
+    queryFn: fetchProducts,
+    enabled: !!category, // Only fetch if category exists
+    staleTime: 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+  });
+
+  // Filter by category and exclude current product (client-side)
+  const relatedProducts = useMemo(() => {
+    if (!data?.products || !category) return [];
+
+    return data.products
+      .filter(p => p.category === category && p.id !== currentProductId)
+      .slice(0, limit);
+  }, [data?.products, category, currentProductId, limit]);
+
+  return {
+    products: relatedProducts,
+    isLoading,
+    error: error instanceof Error ? error.message : null,
+    refetch: () => { refetch(); },
   };
 }

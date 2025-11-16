@@ -1,13 +1,18 @@
 /**
  * Single Product API Route (BFF Layer)
  * GET /api/products/[id]
+ * Supports both numeric IDs and slug-based URLs:
+ * - /api/products/42
+ * - /api/products/essence-mascara-lash-princess-1
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchProductById } from '@/lib/services/products';
+import { extractIdFromSlug } from '@/lib/utils/slugify';
+import { cacheConfig } from '@/lib/config';
 
 // Revalidate product details every 60 seconds (ISR)
-export const revalidate = 60;
+export const revalidate = cacheConfig.products.detail;
 
 export async function GET(
   request: NextRequest,
@@ -15,13 +20,15 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const productId = parseInt(id, 10);
 
-    if (isNaN(productId) || productId <= 0) {
+    // Extract product ID from either numeric ID or compound slug
+    const productId = extractIdFromSlug(id);
+
+    if (!productId || productId <= 0) {
       return NextResponse.json(
         {
           error: {
-            message: 'Invalid product ID',
+            message: 'Invalid product ID or slug',
           },
         },
         { status: 400 }

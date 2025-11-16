@@ -5,6 +5,7 @@
 
 import { fetchJsonWithHeaders, type FetchResult } from './upstream';
 import type { Cart, AddToCartRequest, UpdateCartLineRequest } from '../types/cart';
+import { cacheConfig } from '@/lib/config';
 
 // Base URL from environment variable, fallback to localhost
 const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_BASE_URL || 'http://localhost:8080/api';
@@ -33,7 +34,7 @@ function getHeaders(cookieHeader?: string): HeadersInit {
 export async function getCart(cookieHeader?: string): Promise<FetchResult<Cart>> {
   return fetchJsonWithHeaders<Cart>(`${BASE_URL}/cart`, {
     headers: cookieHeader ? getHeaders(cookieHeader) : undefined,
-    cache: 'no-store',
+    cache: cacheConfig.dynamic.cart,
   });
 }
 
@@ -49,7 +50,7 @@ export async function addToCart(request: AddToCartRequest, cookieHeader?: string
     method: 'POST',
     headers: getHeaders(cookieHeader),
     body: JSON.stringify(request),
-    cache: 'no-store',
+    cache: cacheConfig.dynamic.cart,
   });
 }
 
@@ -72,7 +73,7 @@ export async function updateCartLine(
     method: 'PUT',
     headers: getHeaders(cookieHeader),
     body: JSON.stringify(request),
-    cache: 'no-store',
+    cache: cacheConfig.dynamic.cart,
   });
 }
 
@@ -87,6 +88,6 @@ export async function removeCartLine(lineId: string, cookieHeader?: string): Pro
   return fetchJsonWithHeaders<Cart>(`${BASE_URL}/cart/remove/${lineId}`, {
     method: 'DELETE',
     headers: cookieHeader ? getHeaders(cookieHeader) : undefined,
-    cache: 'no-store',
+    cache: cacheConfig.dynamic.cart,
   });
 }

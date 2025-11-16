@@ -34,6 +34,16 @@ export const cartConfig = {
     // Tax rate as a decimal (13% = 0.13)
     rate: 0.13,
   },
+
+  /**
+   * Cart UX Configuration
+   */
+  ux: {
+    // Debounce delay for quantity updates in milliseconds
+    // Allows rapid clicking of +/- buttons without triggering multiple API calls
+    // Recommended: 300-500ms for responsive feel with API efficiency
+    quantityDebounceMs: 500,
+  },
 } as const
 
 /**

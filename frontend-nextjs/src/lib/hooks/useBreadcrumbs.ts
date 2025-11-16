@@ -6,7 +6,7 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { categoryDisplayNames, getCategorySection } from '@/lib/config/brand'
+import { categoryDisplayNames, getCategorySection } from '@/lib/cms'
 import { kebabToTitleCase } from '@/lib/utils/format'
 
 export interface Breadcrumb {
@@ -40,13 +40,13 @@ export function useBreadcrumbs(options: UseBreadcrumbsOptions = {}): Breadcrumb[
       // Use display name from config if available, otherwise format the slug
       const categoryName = categoryDisplayNames[productCategory] || kebabToTitleCase(productCategory)
       // Link to the category page
-      breadcrumbs.push({ name: categoryName, href: `/category/${productCategory}` })
+      breadcrumbs.push({ name: categoryName, href: `/collections/${productCategory}` })
     }
     return breadcrumbs
   }
 
-  // Handle /category/[slug] route
-  if (pathname.startsWith('/category/') && categorySlug) {
+  // Handle /collections/[slug] route
+  if (pathname.startsWith('/collections/') && categorySlug) {
     // Add Shop All breadcrumb
     breadcrumbs.push({ name: 'Shop All', href: '/products' })
 

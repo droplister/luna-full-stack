@@ -307,4 +307,121 @@ class CartControllerTest extends CIUnitTestCase
         $json = json_decode($result->getJSON());
         $this->assertEquals(400, $json->status);
     }
+
+    /**
+     * Test 13: Cart response includes stock field for each item
+     * Required for optimistic updates and quantity limits on frontend
+     */
+    public function testCartResponseIncludesStockField()
+    {
+        $product = [
+            'product_id' => 1,
+            'quantity' => 2,
+            'title' => 'Test Product',
+            'price' => 9.99,
+            'stock' => 10 // Mock stock value
+        ];
+
+        $result = $this->withBodyFormat('json')->post('/api/cart/add', $product);
+        $json = json_decode($result->getJSON());
+
+        // Verify stock field is present in response
+        $this->assertObjectHasProperty('stock', $json->items[0]);
+        $this->assertIsInt($json->items[0]->stock);
+        $this->assertGreaterThanOrEqual(0, $json->items[0]->stock);
+    }
+
+    /**
+     * Test 14: Update quantity beyond stock limit should fail
+     * Critical for preventing overselling
+     */
+    public function testUpdateQuantityBeyondStockLimitFails()
+    {
+        // Use product ID 9 which has stock: 4 in DummyJSON
+        // This ensures our test quantity exceeds actual stock
+        $product = [
+            'product_id' => 9,
+            'quantity' => 2,
+            'title' => 'Limited Stock Product',
+            'price' => 10.00,
+            'stock' => 4
+        ];
+
+        $addResult = $this->withBodyFormat('json')->post('/api/cart/add', $product);
+        $json = json_decode($addResult->getJSON());
+        $lineId = $json->items[0]->line_id;
+
+        // Try to update quantity to more than actual stock (4)
+        $result = $this->withSession(null)->withBodyFormat('json')->put("/api/cart/update/{$lineId}", ['quantity' => 10]);
+
+        // Should return error (422 for stock validation)
+        $result->assertStatus(422);
+
+        $json = json_decode($result->getJSON());
+
+        // CodeIgniter's fail() wraps the error in: {status, error, messages: {status, message, description}}
+        // Check that the response contains the stock limit message
+        $this->assertEquals(422, $json->status);
+        $this->assertObjectHasProperty('messages', $json);
+        $this->assertObjectHasProperty('message', $json->messages);
+        $this->assertMatchesRegularExpression('/stock|available/i', $json->messages->message);
+    }
+
+    /**
+     * Test 15: Add quantity that exceeds stock should fail
+     */
+    public function testAddQuantityExceedingStockFails()
+    {
+        // Use product ID 9 which has stock: 4 in DummyJSON
+        // This ensures our test quantity exceeds actual stock
+        $product = [
+            'product_id' => 9,
+            'quantity' => 10, // Exceeds actual stock of 4
+            'title' => 'Product',
+            'price' => 10.00,
+            'stock' => 4
+        ];
+
+        $result = $this->withBodyFormat('json')->post('/api/cart/add', $product);
+
+        // Should return 422 error for stock validation
+        $result->assertStatus(422);
+
+        $json = json_decode($result->getJSON());
+
+        // CodeIgniter's fail() wraps the error in: {status, error, messages: {status, message, description}}
+        // Check that the response contains the stock limit message
+        $this->assertEquals(422, $json->status);
+        $this->assertObjectHasProperty('messages', $json);
+        $this->assertObjectHasProperty('message', $json->messages);
+        $this->assertMatchesRegularExpression('/stock|available/i', $json->messages->message);
+    }
+
+    /**
+     * Test 16: Stock field updates when product stock changes
+     * Ensures cart always shows current stock availability
+     */
+    public function testStockFieldReflectsCurrentInventory()
+    {
+        // Add product to cart
+        $product = [
+            'product_id' => 1,
+            'quantity' => 2,
+            'title' => 'Product',
+            'price' => 10.00,
+            'stock' => 10
+        ];
+
+        $this->withBodyFormat('json')->post('/api/cart/add', $product);
+
+        // Get cart - should include current stock from product database
+        $result = $this->withSession(null)->get('/api/cart');
+        $json = json_decode($result->getJSON());
+
+        // Stock should be fetched fresh from product inventory, not cached
+        $this->assertObjectHasProperty('stock', $json->items[0]);
+        // The actual stock value should come from the products table/API
+        // This test verifies the field exists and is a valid number
+        $this->assertIsInt($json->items[0]->stock);
+    }
 }

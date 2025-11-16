@@ -7,8 +7,9 @@ export interface CartLineItem {
   line_id: string; // MD5 hash of product_id
   product_id: number;
   title: string;
-  price: number; // in cents
+  price: number; // in cents (from backend)
   quantity: number;
+  stock: number; // available inventory for this product
   image?: string;
   brand?: string;
   category?: string;
@@ -29,7 +30,8 @@ export interface AddToCartRequest {
   product_id: number;
   quantity: number;
   title: string;
-  price: number; // in cents
+  price: number; // in dollars (backend converts to cents)
+  stock: number; // available inventory
   image?: string;
   brand?: string;
   category?: string;

@@ -30,6 +30,7 @@ export async function addProductToCart(product: Product, quantity: number = 1, c
     quantity,
     title: product.title,
     price: product.price, // Backend will convert to cents
+    stock: product.stock,
     image: product.thumbnail,
     brand: product.brand,
     category: product.category,

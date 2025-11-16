@@ -5,7 +5,7 @@
 
 import { fetchJson, buildUrl } from './upstream';
 import type { DummyProduct, DummyProductList, ProductCategory } from '../types/products';
-import { configuredCategories } from '../config/brand';
+import { configuredCategories } from '../cms';
 
 const BASE_URL = 'https://dummyjson.com';
 
