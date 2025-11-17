@@ -6,12 +6,12 @@
 'use client';
 
 import { useEffect, useCallback, useRef, useMemo, startTransition } from 'react';
-import { useCartStore } from '../store/cart';
-import type { Product } from '../types/products';
-import type { Cart, CartLineItem } from '../types/cart';
+import { useCartStore } from '@/lib/store/cart';
+import type { Product } from '@/lib/types/products';
+import type { Cart, CartLineItem } from '@/lib/types/cart';
 import { toast } from 'react-hot-toast';
-import { createDebouncedMap } from '../utils/debounce';
-import { cartConfig } from '../config/cart';
+import { createDebouncedMap } from '@/utils/debounce';
+import { cartConfig } from '@/lib/config/cart';
 import md5 from 'md5';
 
 /**
@@ -271,7 +271,6 @@ export function useCart(): UseCartReturn {
         const cart: Cart = await response.json();
 
         // Update with server response only if state hasn't changed (prevents race conditions)
-        startTransition(() => {
         const wasApplied = setCartIfCurrent(cart, expectedVersion);
 
         if (wasApplied) {

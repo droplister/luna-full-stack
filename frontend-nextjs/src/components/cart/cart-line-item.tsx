@@ -8,9 +8,9 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { CheckIcon, XMarkIcon as XMarkIconMini } from '@heroicons/react/20/solid'
 import { ChevronDownIcon } from '@heroicons/react/16/solid'
-import { formatPrice, kebabToTitleCase } from '@/lib/utils/format'
+import { formatPrice, kebabToTitleCase } from '@/utils/format'
 import type { CartLineItem } from '@/lib/types/cart'
-import { getProductUrlFromIdAndTitle } from '@/lib/utils/slugify'
+import { getProductUrlFromIdAndTitle } from '@/utils/slugify'
 
 type Variant = 'full' | 'compact' | 'summary'
 

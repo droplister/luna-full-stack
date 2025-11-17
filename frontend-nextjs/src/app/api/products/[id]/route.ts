@@ -8,7 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchProductById } from '@/lib/services/products';
-import { extractIdFromSlug } from '@/lib/utils/slugify';
+import { extractIdFromSlug } from '@/utils/slugify';
 import { cacheConfig } from '@/lib/config';
 
 // Revalidate product details every 60 seconds (ISR)

@@ -7,7 +7,7 @@
 import Image from 'next/image'
 import { ChevronUpIcon } from '@heroicons/react/20/solid'
 import { Popover, PopoverBackdrop, PopoverButton, PopoverPanel } from '@headlessui/react'
-import { formatPrice, kebabToTitleCase } from '@/lib/utils/format'
+import { formatPrice, kebabToTitleCase } from '@/utils/format'
 import type { CartLineItem } from '@/lib/types/cart'
 
 interface CheckoutOrderSummaryProps {

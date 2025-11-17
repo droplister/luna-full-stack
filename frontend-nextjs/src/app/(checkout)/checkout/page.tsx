@@ -9,7 +9,7 @@ import { ContactSection } from '@/components/checkout/contact-section'
 import { PaymentSection } from '@/components/checkout/payment-section'
 import { ShippingSection } from '@/components/checkout/shipping-section'
 import { BillingSection } from '@/components/checkout/billing-section'
-import { useCart } from '@/lib/hooks/useCart'
+import { useCart } from '@/hooks/useCart'
 import { brand } from '@/lib/cms'
 import { calculateShipping, calculateTax } from '@/lib/config'
 

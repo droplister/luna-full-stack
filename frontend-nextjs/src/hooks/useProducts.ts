@@ -8,7 +8,7 @@
 
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import type { Product } from '../types/products';
+import type { Product } from '@/lib/types/products';
 
 interface ProductsResponse {
   products: Product[];

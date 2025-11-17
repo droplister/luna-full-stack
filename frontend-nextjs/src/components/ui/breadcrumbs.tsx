@@ -8,7 +8,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { ShoppingBagIcon } from '@heroicons/react/24/outline'
-import { useCart } from '@/lib/hooks/useCart'
+import { useCart } from '@/hooks/useCart'
 import { ApparateButton } from './apparate-button'
 
 export interface Breadcrumb {

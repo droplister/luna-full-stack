@@ -7,9 +7,9 @@
 
 import { useState, useMemo } from 'react'
 import { FunnelIcon } from '@heroicons/react/20/solid'
-import { useProducts } from '@/lib/hooks/useProducts'
-import { useCart } from '@/lib/hooks/useCart'
-import { useDelayedLoading } from '@/lib/hooks/useDelayedLoading'
+import { useProducts } from '@/hooks/useProducts'
+import { useCart } from '@/hooks/useCart'
+import { useDelayedLoading } from '@/hooks/useDelayedLoading'
 import { ProductCard } from '@/components/cards/product-card'
 import { CategoryList } from '@/components/ui/category-list'
 import { FilterGroup } from '@/components/ui/filter-group'
@@ -18,9 +18,9 @@ import { ActiveFilters } from '@/components/ui/active-filters'
 import { CollectionHeader } from '@/components/headers/collection-header'
 import { Breadcrumbs } from '@/components/ui/breadcrumbs'
 import { MobileFilterDialog } from '@/components/ui/mobile-filter-dialog'
-import { useBreadcrumbs } from '@/lib/hooks/useBreadcrumbs'
-import { toTitleCase } from '@/lib/utils/format'
-import { extractAllCategories } from '@/lib/utils/categories'
+import { useBreadcrumbs } from '@/hooks/useBreadcrumbs'
+import { toTitleCase } from '@/utils/format'
+import { extractAllCategories } from '@/utils/categories'
 
 export function ProductsPageClient() {
   const { products, total, isLoading, error, category, setCategory } = useProducts()

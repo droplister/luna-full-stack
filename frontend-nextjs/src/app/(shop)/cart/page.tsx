@@ -7,7 +7,7 @@ import { Breadcrumbs } from '@/components/ui/breadcrumbs'
 import { CartLineItem } from '@/components/cart/cart-line-item'
 import { OrderSummary } from '@/components/cart/order-summary'
 import { EmptyCart } from '@/components/cart/empty-cart'
-import { useCart } from '@/lib/hooks/useCart'
+import { useCart } from '@/hooks/useCart'
 import { calculateShipping, calculateTax } from '@/lib/config/cart'
 import type { Product } from '@/lib/types/products'
 

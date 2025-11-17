@@ -7,7 +7,7 @@
 
 import { usePathname } from 'next/navigation'
 import { categoryDisplayNames, getCategorySection } from '@/lib/cms'
-import { kebabToTitleCase } from '@/lib/utils/format'
+import { kebabToTitleCase } from '@/utils/format'
 
 export interface Breadcrumb {
   name: string

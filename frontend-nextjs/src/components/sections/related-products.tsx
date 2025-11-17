@@ -7,7 +7,7 @@
 
 import { memo, useMemo } from 'react'
 import Link from 'next/link'
-import { useRelatedProducts } from '@/lib/hooks/useProducts'
+import { useRelatedProducts } from '@/hooks/useProducts'
 import { RelatedProductCard } from '../cards/related-product-card'
 import type { Product } from '@/lib/types/products'
 

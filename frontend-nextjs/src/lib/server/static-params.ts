@@ -3,7 +3,7 @@
  * Utilities for generating static paths at build time (SSG/ISR)
  */
 
-import { generateProductSlug } from '@/lib/utils/slugify'
+import { generateProductSlug } from '@/utils/slugify'
 import type { Product } from '@/lib/types/products'
 
 /**

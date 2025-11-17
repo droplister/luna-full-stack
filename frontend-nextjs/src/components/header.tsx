@@ -24,7 +24,7 @@ import {
   TabPanels,
 } from '@headlessui/react'
 import { Bars3Icon, ShoppingBagIcon, XMarkIcon, SparklesIcon } from '@heroicons/react/24/outline'
-import { useCart } from '@/lib/hooks/useCart'
+import { useCart } from '@/hooks/useCart'
 import { brand, navigation, promoBar as promoBarMessage } from '@/lib/cms'
 import { RevelioModal } from '@/components/modals/revelio-modal'
 import { PromoBar } from '@/components/ui/promo-bar'

@@ -19,7 +19,7 @@ test.describe('Related Products', () => {
     await page.waitForTimeout(500);
 
     // Look for related products section
-    const relatedSection = page.locator('text=/Related Products|You may also like|Similar Items/i, [data-testid="related-products"], section:has-text("Related")').first();
+    const relatedSection = page.locator('[data-testid="related-products"], section:has-text("Related"), h2:has-text("Related Products"), h3:has-text("You may also like")').first();
 
     // Related products should be visible
     if (await relatedSection.isVisible({ timeout: 2000 }).catch(() => false)) {
@@ -36,7 +36,7 @@ test.describe('Related Products', () => {
       await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
       await page.waitForTimeout(1000);
 
-      const relatedAfterScroll = page.locator('text=/Related Products|You may also like|Similar Items/i, [data-testid="related-products"]').first();
+      const relatedAfterScroll = page.locator('[data-testid="related-products"], h2:has-text("Related Products"), h3:has-text("You may also like")').first();
       await expect(relatedAfterScroll).toBeVisible({ timeout: 5000 });
     }
   });
@@ -74,9 +74,9 @@ test.describe('Related Products', () => {
     await page.waitForSelector('text=Shopping cart', { timeout: 5000 });
 
     // Close cart
-    const closeButton = page.locator('button:has-text("Continue Shopping"), button[aria-label="Close panel"]').first();
+    const closeButton = page.locator('button[aria-label="Close panel"]').first();
     await closeButton.click();
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(1000);
 
     // Scroll to related products
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight / 2));
@@ -169,9 +169,9 @@ test.describe('Related Products', () => {
       await page.waitForSelector('text=Shopping cart', { timeout: 5000 });
 
       // Close cart
-      const closeButton = page.locator('button:has-text("Continue Shopping")').first();
+      const closeButton = page.locator('button[aria-label="Close panel"]').first();
       await closeButton.click();
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(1000);
 
       // Navigate to a different product
       await page.goto('/products/2');

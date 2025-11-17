@@ -5,7 +5,7 @@
 
 import type { Metadata } from 'next'
 import { getAllCollectionSlugs, getCollectionInfo } from '@/lib/server/collections'
-import { generateCollectionMetadata } from '@/lib/utils/metadata'
+import { generateCollectionMetadata } from '@/utils/metadata'
 import { CategoryPageClient } from './page.client'
 
 interface CategoryPageProps {

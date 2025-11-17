@@ -5,7 +5,7 @@
 
 import { navigation } from '@/lib/cms/navigation'
 import { categoryDisplayNames, categoryDescriptions } from '@/lib/cms/categories'
-import { kebabToTitleCase } from '@/lib/utils/format'
+import { kebabToTitleCase } from '@/utils/format'
 
 /**
  * Get all collection slugs for generateStaticParams

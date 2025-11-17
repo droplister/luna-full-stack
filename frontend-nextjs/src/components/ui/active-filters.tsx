@@ -7,7 +7,7 @@
 
 import { XMarkIcon } from '@heroicons/react/20/solid'
 import type { SortOption } from './sort-options'
-import { toTitleCase } from '@/lib/utils/format'
+import { toTitleCase } from '@/utils/format'
 
 interface ActiveFiltersProps {
   selectedTags: Set<string>

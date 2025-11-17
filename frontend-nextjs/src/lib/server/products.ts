@@ -4,7 +4,7 @@
  */
 
 import type { Product } from '@/lib/types/products'
-import { extractIdFromSlug } from '@/lib/utils/slugify'
+import { extractIdFromSlug } from '@/utils/slugify'
 import { cacheConfig } from '@/lib/config'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'

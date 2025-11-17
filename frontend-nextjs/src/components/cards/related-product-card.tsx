@@ -9,7 +9,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import type { Product } from '@/lib/types/products'
-import { getProductUrl } from '@/lib/utils/slugify'
+import { getProductUrl } from '@/utils/slugify'
 
 interface RelatedProductCardProps {
   product: Product

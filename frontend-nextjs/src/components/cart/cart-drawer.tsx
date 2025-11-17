@@ -11,7 +11,7 @@ import { CartLineItem } from './cart-line-item'
 import { OrderSummary } from './order-summary'
 import { FreeShippingProgress } from './free-shipping-progress'
 import { EmptyCart } from './empty-cart'
-import { useCart } from '@/lib/hooks/useCart'
+import { useCart } from '@/hooks/useCart'
 import { Z_INDEX } from '@/lib/config/z-index'
 import { calculateShipping } from '@/lib/config/cart'
 

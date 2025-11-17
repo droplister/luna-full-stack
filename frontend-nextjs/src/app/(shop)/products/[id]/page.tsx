@@ -6,8 +6,8 @@
 import type { Metadata } from 'next'
 import { generateProductStaticParams } from '@/lib/server/static-params'
 import { getProduct } from '@/lib/server/products'
-import { generateProductMetadata } from '@/lib/utils/metadata'
-import { generateProductSlug } from '@/lib/utils/slugify'
+import { generateProductMetadata } from '@/utils/metadata'
+import { generateProductSlug } from '@/utils/slugify'
 import { ProductPageClient } from './page.client'
 
 interface ProductPageProps {

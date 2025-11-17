@@ -11,7 +11,7 @@ import { useState } from 'react'
 import type { Product } from '@/lib/types/products'
 import { Z_INDEX } from '@/lib/config/z-index'
 import { StarRating } from '../ui/star-rating'
-import { getProductUrl } from '@/lib/utils/slugify'
+import { getProductUrl } from '@/utils/slugify'
 
 interface ProductCardProps {
   product: Product
