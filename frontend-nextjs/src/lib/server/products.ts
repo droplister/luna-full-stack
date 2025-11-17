@@ -5,9 +5,7 @@
 
 import type { Product } from '@/lib/types/products'
 import { extractIdFromSlug } from '@/utils/slugify'
-import { cacheConfig } from '@/lib/config'
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
+import { fetchProductById, fetchAllCategoryProducts } from '@/lib/services/products'
 
 /**
  * Fetch a single product by ID or slug (server-side)
@@ -21,16 +19,8 @@ export async function getProduct(idOrSlug: string | number): Promise<Product | n
       return null
     }
 
-    const response = await fetch(`${API_BASE}/api/products/${id}`, {
-      next: { revalidate: cacheConfig.products.detail }, // ISR: 1-minute cache
-    })
-
-    if (!response.ok) {
-      console.error(`Failed to fetch product ${id}: ${response.status}`)
-      return null
-    }
-
-    const product = await response.json()
+    // Fetch directly from service layer to avoid HTTP self-referencing during build
+    const product = await fetchProductById(id)
     return product
   } catch (error) {
     console.error('Error fetching product:', error)
@@ -44,16 +34,8 @@ export async function getProduct(idOrSlug: string | number): Promise<Product | n
  */
 export async function getAllProducts(): Promise<Product[]> {
   try {
-    const response = await fetch(`${API_BASE}/api/products`, {
-      next: { revalidate: cacheConfig.products.list }, // ISR: 1-minute cache
-    })
-
-    if (!response.ok) {
-      console.error(`Failed to fetch products: ${response.status}`)
-      return []
-    }
-
-    const products = await response.json()
+    // Fetch directly from service layer to avoid HTTP self-referencing during build
+    const { products } = await fetchAllCategoryProducts()
     return products
   } catch (error) {
     console.error('Error fetching products:', error)
