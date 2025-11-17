@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useEffect, useCallback, useRef, useMemo, startTransition } from 'react';
+import { useEffect, useCallback, useMemo, startTransition } from 'react';
 import { useCartStore } from '@/lib/store/cart';
 import type { Product } from '@/lib/types/products';
 import type { Cart, CartLineItem } from '@/lib/types/cart';
@@ -39,7 +39,7 @@ export interface UseCartReturn {
 
   // Actions
   fetchCart: () => Promise<void>;
-  addItem: (product: Product, quantity?: number) => Promise<void>;
+  addItem: (product: Product, quantity?: number, openDrawer?: boolean) => Promise<void>;
   updateQuantity: (lineId: string, quantity: number) => Promise<void>;
   removeItem: (lineId: string) => Promise<void>;
   incrementItem: (lineId: string) => Promise<void>;
@@ -60,7 +60,6 @@ export function useCart(): UseCartReturn {
     isLoading,
     error,
     isCartOpen,
-    stateVersion,
     setCart,
     setCartIfCurrent,
     setLoading,

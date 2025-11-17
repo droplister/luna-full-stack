@@ -11,7 +11,7 @@ import { fetchProductsByCategory } from '@/lib/services/products';
 import { cacheConfig } from '@/lib/config';
 
 // ISR caching: revalidate every 1 minute (60 seconds)
-export const revalidate = cacheConfig.products.category;
+export const revalidate = cacheConfig.collections.detail;
 
 interface RouteContext {
   params: Promise<{

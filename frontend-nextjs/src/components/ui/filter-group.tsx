@@ -36,7 +36,7 @@ export function FilterGroup({
 }: FilterGroupProps) {
   return (
     <Disclosure as="div" className="border-b border-gray-200 py-6" defaultOpen={defaultOpen}>
-      {({ open }) => (
+      {() => (
         <>
           <h3 className="-my-3 flow-root">
             <DisclosureButton className="group flex w-full items-center justify-between bg-white py-3 text-sm text-gray-400 hover:text-gray-500">

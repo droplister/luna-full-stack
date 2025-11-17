@@ -5,6 +5,7 @@
 
 'use client'
 
+import Image from 'next/image'
 import { StarRating } from '../ui/star-rating'
 
 export interface Review {
@@ -39,7 +40,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
             />
           </div>
         ) : (
-          <img alt={`${review.author}.`} src={review.avatarSrc} className="size-12 rounded-full" />
+          <Image alt={`${review.author}.`} src={review.avatarSrc} width={48} height={48} className="size-12 rounded-full" />
         )}
         <div className="ml-4">
           <h4 className="text-sm font-bold text-gray-900">{review.author}</h4>

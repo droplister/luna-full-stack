@@ -94,7 +94,6 @@ describe('Cart Store', () => {
 
       // Second update (newer)
       setCart(mockCart2);
-      const version2 = useCartStore.getState().stateVersion;
 
       // Try to apply stale response (expects version1, but current is version2)
       setCartIfCurrent(staleCart, version1);

@@ -6,9 +6,9 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { useCart } from '../useCart';
-import { useCartStore } from '../../store/cart';
-import type { Product } from '../../types/products';
-import type { Cart } from '../../types/cart';
+import { useCartStore } from '../../lib/store/cart';
+import type { Product } from '../../lib/types/products';
+import type { Cart } from '../../lib/types/cart';
 import * as toast from 'react-hot-toast';
 
 // Mock react-hot-toast
@@ -52,7 +52,7 @@ const createMockProduct = (id: number): Product => ({
 
 // Helper to create a mock cart response
 const createMockCartResponse = (productIds: number[]): Cart => {
-  const items = productIds.map((id, index) => ({
+  const items = productIds.map((id) => ({
     line_id: `line_${id}`,
     product_id: id,
     title: `Product ${id}`,

@@ -6,8 +6,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { CheckIcon, XMarkIcon as XMarkIconMini } from '@heroicons/react/20/solid'
-import { ChevronDownIcon } from '@heroicons/react/16/solid'
+import { XMarkIcon as XMarkIconMini } from '@heroicons/react/20/solid'
 import { formatPrice, kebabToTitleCase } from '@/utils/format'
 import type { CartLineItem } from '@/lib/types/cart'
 import { getProductUrlFromIdAndTitle } from '@/utils/slugify'
@@ -19,12 +18,10 @@ interface CartLineItemProps {
   currency: string
   variant?: Variant
   isLoading?: boolean
-  onUpdateQuantity?: (lineId: string, quantity: number) => void
   onIncrement?: (lineId: string) => void
   onDecrement?: (lineId: string) => void
   onRemove?: (lineId: string) => void
   onNavigate?: () => void
-  itemIdx?: number
 }
 
 export function CartLineItem({
@@ -32,12 +29,10 @@ export function CartLineItem({
   currency,
   variant = 'full',
   isLoading = false,
-  onUpdateQuantity,
   onIncrement,
   onDecrement,
   onRemove,
   onNavigate,
-  itemIdx = 0,
 }: CartLineItemProps) {
   // Compact variant - cart drawer and cart page with +/- buttons
   if (variant === 'compact') {

@@ -16,10 +16,6 @@ test.describe('Cart Functionality', () => {
     await page.waitForSelector('[data-testid="product-card"]', { timeout: 20000 });
     await page.waitForTimeout(2000);
 
-    // Get the first product's price
-    const priceText = await page.locator('.group .font-medium.text-gray-900').first().textContent();
-    const price = priceText?.replace('$', '');
-
     // Click "Add to Cart" button on first product
     await page.locator('button:has-text("Add to Cart")').first().click();
 

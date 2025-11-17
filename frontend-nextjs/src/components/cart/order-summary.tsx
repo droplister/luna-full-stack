@@ -5,7 +5,6 @@
  */
 
 import Link from 'next/link'
-import { QuestionMarkCircleIcon } from '@heroicons/react/20/solid'
 import { formatPrice } from '@/utils/format'
 
 interface OrderSummaryProps {
@@ -21,13 +20,11 @@ interface OrderSummaryProps {
 export function OrderSummary({
   subtotal,
   shipping,
-  tax,
   currency,
   variant = 'full',
   showCheckoutButton = true,
   onCheckout,
 }: OrderSummaryProps) {
-  const total = tax !== undefined ? subtotal + shipping + tax : subtotal + shipping
 
   // Compact variant - for cart drawer (no tax, simpler layout)
   if (variant === 'compact') {

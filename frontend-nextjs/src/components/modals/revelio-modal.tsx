@@ -15,11 +15,9 @@ import { features, Z_INDEX } from '@/lib/config'
 
 export function RevelioModal() {
   const { isRevelioOpen, closeRevelio, setPromoCode } = usePromoStore()
-  const [isRevealed, setIsRevealed] = useState(false)
   const [copied, setCopied] = useState(false)
 
   const handleReveal = () => {
-    setIsRevealed(true)
     setPromoCode(discountCode.code)
   }
 
@@ -48,9 +46,8 @@ export function RevelioModal() {
 
   const handleClose = () => {
     closeRevelio()
-    // Reset reveal state when closing
+    // Reset state when closing
     setTimeout(() => {
-      setIsRevealed(false)
       setCopied(false)
     }, 300)
   }

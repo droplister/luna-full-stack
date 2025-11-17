@@ -122,10 +122,6 @@ test.describe('Product Detail Page', () => {
     await page.goto('/products/1');
     await page.waitForLoadState('networkidle');
 
-    // Verify cart badge starts at 0 or empty
-    const cartBadge = page.locator('[data-testid="cart-badge"], .cart-count, text=/\\d+ items?/i');
-    const initialCount = await cartBadge.textContent().catch(() => '0');
-
     // Click "Add to Cart" button
     const addButton = page.locator('button:has-text("Add to Cart")').first();
     await addButton.click();

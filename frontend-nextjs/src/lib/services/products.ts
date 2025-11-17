@@ -4,7 +4,7 @@
  */
 
 import { getProducts, getProduct, searchProducts, getCategories, getProductsByCategory, getAllConfiguredCategoryProducts } from '../clients/dummyjson';
-import type { DummyProduct, DummyProductList, Product, ProductCategory } from '../types/products';
+import type { Product, ProductCategory } from '../types/products';
 
 /**
  * Fetch paginated list of all products

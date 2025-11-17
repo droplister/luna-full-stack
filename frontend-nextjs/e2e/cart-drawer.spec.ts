@@ -59,9 +59,8 @@ test.describe('Cart Drawer Accessibility & UX', () => {
     await page.waitForSelector('button:has-text("Add to Cart")', { timeout: 20000 });
     await page.waitForTimeout(2000);
 
-    // Check initial cart badge (should be empty or 0)
+    // Check cart button
     const cartButton = page.locator('button:has-text("Cart"), [data-testid="cart-button"]').first();
-    const initialText = await cartButton.textContent();
 
     // Add item to cart
     await page.locator('button:has-text("Add to Cart")').first().click();

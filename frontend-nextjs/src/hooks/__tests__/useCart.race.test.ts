@@ -6,9 +6,9 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { useCart } from '../useCart';
-import { useCartStore } from '../../store/cart';
-import type { Product } from '../../types/products';
-import type { Cart } from '../../types/cart';
+import { useCartStore } from '../../lib/store/cart';
+import type { Product } from '../../lib/types/products';
+import type { Cart } from '../../lib/types/cart';
 
 // Mock react-hot-toast
 vi.mock('react-hot-toast', () => ({

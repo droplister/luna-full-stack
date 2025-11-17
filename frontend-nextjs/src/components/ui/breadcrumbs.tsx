@@ -40,11 +40,11 @@ export function Breadcrumbs({ items, showCheckout = true, currentProductId }: Br
     }
     // If items removed or already had items, show immediately
     else if (itemCount > 0) {
-      setShowButton(true)
+      queueMicrotask(() => setShowButton(true))
     }
     // Hide immediately when count goes to 0
     else {
-      setShowButton(false)
+      queueMicrotask(() => setShowButton(false))
     }
 
     prevItemCountRef.current = itemCount

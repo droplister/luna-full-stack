@@ -20,8 +20,8 @@ export function CartDrawer() {
     items,
     subtotal,
     currency,
+    itemCount,
     isCartOpen,
-    isLoading,
     isItemLoading,
     error,
     closeCart,
@@ -34,13 +34,25 @@ export function CartDrawer() {
   const shipping = calculateShipping(subtotal)
 
   return (
-    <Dialog open={isCartOpen} onClose={closeCart} className="relative" style={{ zIndex: Z_INDEX.CART_DRAWER }}>
-      <DialogBackdrop
-        transition
-        className="fixed inset-0 bg-gray-500/75 transition-opacity duration-500 ease-in-out data-closed:opacity-0"
-      />
+    <>
+      {/* Screen reader announcements for cart updates */}
+      <div aria-live="polite" aria-atomic="true" className="sr-only">
+        {items.length === 0 ? (
+          'Shopping cart is empty'
+        ) : items.length === 1 ? (
+          `Shopping cart has 1 item`
+        ) : (
+          `Shopping cart has ${itemCount} items`
+        )}
+      </div>
 
-      <div className="fixed inset-0 overflow-hidden">
+      <Dialog open={isCartOpen} onClose={closeCart} className="relative" style={{ zIndex: Z_INDEX.CART_DRAWER }}>
+        <DialogBackdrop
+          transition
+          className="fixed inset-0 bg-gray-500/75 transition-opacity duration-500 ease-in-out data-closed:opacity-0"
+        />
+
+        <div className="fixed inset-0 overflow-hidden">
         <div className="absolute inset-0 overflow-hidden">
           <div className="pointer-events-none fixed inset-y-0 right-0 flex max-w-full pl-10 sm:pl-16">
             <DialogPanel
@@ -115,5 +127,6 @@ export function CartDrawer() {
         </div>
       </div>
     </Dialog>
+    </>
   )
 }

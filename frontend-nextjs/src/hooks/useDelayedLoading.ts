@@ -24,7 +24,7 @@ export function useDelayedLoading(isLoading: boolean, delay: number = 200): bool
       return () => clearTimeout(timer)
     } else {
       // Immediately hide loading when done
-      setShouldShowLoading(false)
+      queueMicrotask(() => setShouldShowLoading(false))
     }
   }, [isLoading, delay])
 

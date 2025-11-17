@@ -117,8 +117,8 @@ test.describe('Race Conditions & State Consistency', () => {
     await page.waitForSelector('text=Shopping cart', { timeout: 5000 });
 
     // Verify 2 items
-    let cartItems = page.locator('[data-testid="cart-item"], li:has(button:has-text("Remove"))');
-    let itemCount = await cartItems.count();
+    const cartItems = page.locator('[data-testid="cart-item"], li:has(button:has-text("Remove"))');
+    const itemCount = await cartItems.count();
     expect(itemCount).toBeGreaterThanOrEqual(2);
 
     // Rapidly click remove on both items

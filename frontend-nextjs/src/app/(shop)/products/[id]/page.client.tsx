@@ -89,8 +89,8 @@ export function ProductPageClient({ params }: ProductPageClientProps) {
   const stableCategory = product?.category || previousCategoryRef.current
   const breadcrumbs = useBreadcrumbs({ productCategory: stableCategory })
 
-  // Fetch related products (used by RelatedProducts component below)
-  const { products: relatedProducts } = useRelatedProducts(product?.category, productId, 20)
+  // Prefetch related products data (used by lazy-loaded RelatedProducts component below)
+  useRelatedProducts(product?.category, productId, 20)
 
   // Delay showing loading state to prevent flicker for fast loads
   const shouldShowLoading = useDelayedLoading(isLoading)

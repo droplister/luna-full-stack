@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useTransition, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 type ApparateButtonProps = {
@@ -95,7 +95,7 @@ export function ApparateButton({
 
       // Data is now cached, navigate to slug-based URL
       router.push(slugUrl);
-    } catch (error) {
+    } catch {
       // If prefetch fails, still navigate with numeric ID fallback
       router.push(`/products/${targetId}`);
     } finally {

@@ -69,6 +69,7 @@ describe('Backend Client', () => {
         quantity: 2,
         title: 'Test Product',
         price: 9.99,
+        stock: 10,
       }
 
       const result = await addToCart(request)
@@ -94,6 +95,7 @@ describe('Backend Client', () => {
         quantity: 1,
         title: 'Test',
         price: 9.99,
+        stock: 10,
       }
       const cookieHeader = 'ci_session=xyz789'
 

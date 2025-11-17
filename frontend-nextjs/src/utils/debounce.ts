@@ -4,6 +4,8 @@
  * have elapsed since the last time the debounced function was invoked.
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 export interface DebouncedFunction<T extends (...args: any[]) => any> {
   (...args: Parameters<T>): void;
   cancel: () => void;

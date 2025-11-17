@@ -66,7 +66,7 @@ export function useProducts(): UseProductsReturn {
     return selectedCategory
       ? data.products.filter(p => p.category === selectedCategory)
       : data.products;
-  }, [data?.products, selectedCategory]);
+  }, [data, selectedCategory]);
 
   return {
     // Product data
@@ -182,9 +182,9 @@ export function useRelatedProducts(
     if (!data?.products || !category) return [];
 
     return data.products
-      .filter(p => p.id !== currentProductId)
+      .filter((p: Product) => p.id !== currentProductId)
       .slice(0, limit);
-  }, [data?.products, category, currentProductId, limit]);
+  }, [data, category, currentProductId, limit]);
 
   return {
     products: relatedProducts,

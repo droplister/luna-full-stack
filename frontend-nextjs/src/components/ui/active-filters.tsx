@@ -17,19 +17,9 @@ interface ActiveFiltersProps {
   onClearAll: () => void
 }
 
-const sortLabels: Record<SortOption, string> = {
-  'default': 'Featured',
-  'price-low': 'Price: Low to High',
-  'price-high': 'Price: High to Low',
-  'rating-high': 'Best Rating',
-  'discount-high': 'Best Discount',
-}
-
 export function ActiveFilters({
   selectedTags,
-  currentSort,
   onRemoveTag,
-  onClearSort,
   onClearAll,
 }: ActiveFiltersProps) {
   // Only show when there are tag filters (not just sort)

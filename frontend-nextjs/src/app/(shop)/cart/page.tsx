@@ -1,7 +1,6 @@
 'use client'
 
 import { useMemo, useCallback } from 'react'
-import Link from 'next/link'
 import { RelatedProducts } from '@/components/sections/related-products'
 import { Breadcrumbs } from '@/components/ui/breadcrumbs'
 import { CartLineItem } from '@/components/cart/cart-line-item'
@@ -12,14 +11,11 @@ import { calculateShipping, calculateTax } from '@/lib/config/cart'
 import type { Product } from '@/lib/types/products'
 
 export default function CartPage() {
-  const { items, subtotal, currency, isLoading, isItemLoading, incrementItem, decrementItem, removeItem, addItem } = useCart()
+  const { items, subtotal, currency, isItemLoading, incrementItem, decrementItem, removeItem, addItem } = useCart()
 
   // Calculate shipping and tax
   const shipping = calculateShipping(subtotal)
   const tax = calculateTax(subtotal, shipping)
-
-  // Calculate total
-  const total = subtotal + shipping + tax
 
   const isEmpty = items.length === 0
 

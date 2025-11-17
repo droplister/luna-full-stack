@@ -96,7 +96,6 @@ test.describe('Product Listing Page', () => {
 
     if (await categoryLinks.count() > 0) {
       const categoryLink = categoryLinks.first();
-      const categoryName = await categoryLink.textContent();
 
       await categoryLink.click();
 
@@ -163,7 +162,7 @@ test.describe('Product Listing Page', () => {
     // Check for Next.js Image optimization or lazy loading attributes
     const loading = await images.getAttribute('loading');
     const hasOptimization = loading === 'lazy' || src?.includes('_next/image') || await images.evaluate((img) => {
-      return img.complete && img.naturalHeight > 0;
+      return (img as HTMLImageElement).complete && (img as HTMLImageElement).naturalHeight > 0;
     });
 
     expect(hasOptimization).toBeTruthy();

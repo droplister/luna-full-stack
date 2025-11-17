@@ -23,7 +23,7 @@ import { toTitleCase } from '@/utils/format'
 import { extractAllCategories } from '@/utils/categories'
 
 export function ProductsPageClient() {
-  const { products, total, isLoading, error, category, setCategory } = useProducts()
+  const { products, isLoading, error, category } = useProducts()
   const { addItem } = useCart()
   const breadcrumbs = useBreadcrumbs()
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
@@ -49,7 +49,7 @@ export function ProductsPageClient() {
   const availableTags = useMemo(() => {
     // Filter out tags with less than 3 products and sort alphabetically
     return Array.from(tagCounts.entries())
-      .filter(([_, count]) => count >= 3)
+      .filter(([, count]) => count >= 3)
       .map(([tag]) => tag)
       .sort()
   }, [tagCounts])
@@ -109,18 +109,6 @@ export function ProductsPageClient() {
     onChange: handleTagToggle,
   }] : []
 
-  if (error) {
-    return (
-      <div className="bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
-          <div className="text-center">
-            <p className="text-red-600">Error loading products: {error}</p>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   // Prepare filter sections for mobile dialog
   const mobileFilterSections = useMemo(() => {
     if (availableTags.length === 0) return []
@@ -139,6 +127,18 @@ export function ProductsPageClient() {
       },
     ]
   }, [availableTags, tagCounts, selectedTags])
+
+  if (error) {
+    return (
+      <div className="bg-white">
+        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
+          <div className="text-center">
+            <p className="text-red-600">Error loading products: {error}</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="bg-white">

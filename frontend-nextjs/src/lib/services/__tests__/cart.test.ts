@@ -3,7 +3,8 @@
  * (Functions moved to utils/format.ts)
  */
 
-import { centsToDollars, formatPrice } from '../../utils/format';
+import { describe, it, expect } from 'vitest';
+import { centsToDollars, formatPrice } from '../../../utils/format';
 
 describe('Cart Service - Utility Functions', () => {
   describe('centsToDollars', () => {

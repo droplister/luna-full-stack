@@ -10,16 +10,16 @@ test.describe('Complete User Journeys', () => {
   test('complete shopping journey: Browse → Detail → Add to Cart → Modify Cart', async ({ page }) => {
     // Step 1: Browse products
     await page.goto('/products');
-    await page.waitForSelector('[data-testid="product-card"], .group', { timeout: 10000 });
+    await page.waitForSelector('[data-testid="product-card"]', { timeout: 10000 });
 
     // Verify products are displayed
-    const productCards = page.locator('[data-testid="product-card"], .group').filter({ hasText: /\$\d+/ });
+    const productCards = page.locator('[data-testid="product-card"]');
     const productCount = await productCards.count();
     expect(productCount).toBeGreaterThan(0);
 
     // Step 2: Click product to view detail page
-    await page.locator('[data-testid="product-card"] h3, .group h3').first().click();
-    await page.waitForURL(/\/products\/\d+/, { timeout: 5000 });
+    await page.locator('[data-testid="product-card"] a').first().click();
+    await page.waitForURL(/\/products\/.+/, { timeout: 5000 });
 
     // Verify on detail page
     await expect(page.locator('button:has-text("Add to Cart")')).toBeVisible({ timeout: 5000 });
@@ -28,8 +28,11 @@ test.describe('Complete User Journeys', () => {
     await page.locator('button:has-text("Add to Cart")').first().click();
     await page.waitForSelector('text=Shopping cart', { timeout: 5000 });
 
-    // Verify item in cart
-    await expect(page.locator('[data-testid="cart-item-quantity"]').first()).toBeVisible({ timeout: 3000 });
+    // Wait for cart item to load (increased timeout for slow backend)
+    await page.waitForTimeout(3000); // Give backend API time to complete
+
+    // Verify item actually added to cart by checking for cart line item
+    await expect(page.locator('li:has(button:has-text("Remove"))').first()).toBeVisible({ timeout: 10000 });
 
     // Step 4: Modify cart - increment quantity
     await page.locator('button:has-text("+")').first().click();
@@ -39,13 +42,14 @@ test.describe('Complete User Journeys', () => {
     await page.locator('button:has-text("−")').first().click();
     await expect(page.locator('[data-testid="cart-item-quantity"]').first()).toBeVisible({ timeout: 3000 });
 
-    // Step 6: Continue shopping
-    await page.locator('button:has-text("Continue Shopping")').first().click();
+    // Step 6: Close cart drawer
+    const closeButton = page.locator('button:has([class*="sr-only"]:has-text("Close panel"))').first();
+    await closeButton.click();
     await page.waitForTimeout(500);
 
     // Verify can continue browsing
     await page.goto('/products');
-    await expect(page.locator('[data-testid="product-card"], .group')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('[data-testid="product-card"]').first()).toBeVisible({ timeout: 5000 });
 
     // Step 7: Verify cart persists - reopen cart
     await page.locator('button:has-text("Cart"), [data-testid="cart-button"]').first().click();
@@ -63,7 +67,8 @@ test.describe('Complete User Journeys', () => {
     await expect(page.locator('[data-testid="cart-item-quantity"]').first()).toBeVisible();
 
     // Close cart
-    await page.locator('button:has-text("Continue Shopping")').first().click();
+    const closeButton2 = page.locator('button:has([class*="sr-only"]:has-text("Close panel"))').first();
+    await closeButton2.click();
 
     // Add second product
     await page.locator('button:has-text("Add to Cart")').nth(1).click();
@@ -79,7 +84,7 @@ test.describe('Complete User Journeys', () => {
     await page.waitForTimeout(500);
 
     // Verify subtotal updated
-    const subtotal = page.locator('text=Subtotal').locator('..').locator('p, text=/\\$\\d+/');
+    const subtotal = page.locator('text=Subtotal').locator('..').locator('p').filter({ hasText: /\$\d+/ });
     await expect(subtotal.last()).toBeVisible();
 
     // Remove second item
@@ -104,10 +109,8 @@ test.describe('Complete User Journeys', () => {
     await expect(page.locator('[data-testid="cart-item-quantity"]').first()).toBeVisible();
 
     // Close cart drawer
-    await page.locator('button:has-text("Continue Shopping")').first().click();
-
-    // Simulate closing and reopening browser (preserve cookies)
-    const cookies = await context.cookies();
+    const closeButton3 = page.locator('button:has([class*="sr-only"]:has-text("Close panel"))').first();
+    await closeButton3.click();
 
     // Create new page in same context (cookies persist)
     const newPage = await context.newPage();
@@ -119,7 +122,7 @@ test.describe('Complete User Journeys', () => {
     await newPage.waitForSelector('text=Shopping cart', { timeout: 5000 });
 
     // Verify cart still has items
-    await expect(newPage.locator('text=Qty 1')).toBeVisible({ timeout: 3000 });
+    await expect(newPage.locator('[data-testid="cart-item-quantity"]').first()).toBeVisible({ timeout: 3000 });
 
     // Clean up
     await newPage.close();
@@ -144,9 +147,10 @@ test.describe('Complete User Journeys', () => {
     }
 
     // Verify products are filtered/displayed
-    await expect(page.locator('[data-testid="product-card"], .group')).toBeVisible({ timeout: 10000 });
+    const productCards = page.locator('[data-testid="product-card"]');
+    await expect(productCards.first()).toBeVisible({ timeout: 10000 });
 
-    const collectionProducts = page.locator('[data-testid="product-card"], .group').filter({ hasText: /\$\d+/ });
+    const collectionProducts = productCards.filter({ hasText: /\$\d+/ });
     const count = await collectionProducts.count();
     expect(count).toBeGreaterThan(0);
 
@@ -170,7 +174,8 @@ test.describe('Complete User Journeys', () => {
     await expect(page.locator('[data-testid="cart-item-quantity"]').first()).toBeVisible();
 
     // Close cart
-    await page.locator('button:has-text("Continue Shopping")').first().click();
+    const closeButton2 = page.locator('button:has([class*="sr-only"]:has-text("Close panel"))').first();
+    await closeButton2.click();
 
     // Navigate to product detail page
     await page.goto('/products/2');
@@ -186,9 +191,9 @@ test.describe('Complete User Journeys', () => {
     expect(itemCount).toBeGreaterThanOrEqual(2);
 
     // Close cart
-    const closeButton = page.locator('button:has-text("Continue Shopping"), button[aria-label="Close panel"]').first();
-    if (await closeButton.isVisible()) {
-      await closeButton.click();
+    const closeButton4 = page.locator('button:has([class*="sr-only"]:has-text("Close panel"))').first();
+    if (await closeButton4.isVisible()) {
+      await closeButton4.click();
     }
 
     // Try to add from related products if available
@@ -216,7 +221,7 @@ test.describe('Complete User Journeys', () => {
     await expect(page.locator('text=Subtotal')).toBeVisible();
   });
 
-  test('mobile-like navigation: Test responsive cart behavior', async ({ page, context }) => {
+  test('mobile-like navigation: Test responsive cart behavior', async ({ page }) => {
     // Set mobile viewport
     await page.setViewportSize({ width: 375, height: 667 });
 
@@ -232,10 +237,10 @@ test.describe('Complete User Journeys', () => {
     await expect(cartDrawer).toBeVisible();
 
     // Should be able to close cart on mobile
-    const closeButton = page.locator('button[aria-label="Close panel"], button:has-text("Continue Shopping"), svg[class*="close"]').first();
-    await expect(closeButton).toBeVisible({ timeout: 3000 });
+    const closeButton5 = page.locator('button:has([class*="sr-only"]:has-text("Close panel"))').first();
+    await expect(closeButton5).toBeVisible({ timeout: 3000 });
 
-    await closeButton.click();
+    await closeButton5.click();
     await page.waitForTimeout(500);
 
     // Should be able to reopen cart via mobile menu

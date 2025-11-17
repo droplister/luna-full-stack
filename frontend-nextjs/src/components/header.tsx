@@ -8,6 +8,7 @@
 
 import { Fragment, useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import {
   Dialog,
@@ -17,13 +18,8 @@ import {
   PopoverButton,
   PopoverGroup,
   PopoverPanel,
-  Tab,
-  TabGroup,
-  TabList,
-  TabPanel,
-  TabPanels,
 } from '@headlessui/react'
-import { Bars3Icon, ShoppingBagIcon, XMarkIcon, SparklesIcon } from '@heroicons/react/24/outline'
+import { Bars3Icon, ShoppingBagIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { useCart } from '@/hooks/useCart'
 import { brand, navigation, promoBar as promoBarMessage } from '@/lib/cms'
 import { RevelioModal } from '@/components/modals/revelio-modal'
@@ -116,9 +112,11 @@ export function Header() {
                   <div className="mt-6 grid grid-cols-2 gap-x-4">
                     {navigation.megaMenus[0].featured.map((item) => (
                       <div key={item.name} className="group relative text-sm">
-                        <img
+                        <Image
                           alt={item.imageAlt}
                           src={item.imageSrc}
+                          width={200}
+                          height={200}
                           className="aspect-square w-full rounded-lg bg-gray-100 object-cover group-hover:opacity-75"
                         />
                         <Link
@@ -199,9 +197,11 @@ export function Header() {
                               <div className="col-start-2 grid grid-cols-2 gap-x-8">
                                 {category.featured.map((item) => (
                                   <div key={item.name} className="group relative text-base sm:text-sm">
-                                    <img
+                                    <Image
                                       alt={item.imageAlt}
                                       src={item.imageSrc}
+                                      width={200}
+                                      height={200}
                                       className="aspect-square w-full rounded-lg bg-gray-100 object-cover group-hover:opacity-75"
                                     />
                                     <Link href={item.href} className="mt-6 block font-medium text-gray-900" onClick={() => close()}>

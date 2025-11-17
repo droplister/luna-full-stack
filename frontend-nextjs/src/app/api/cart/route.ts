@@ -5,7 +5,6 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { fetchCart, addProductToCart } from '@/lib/services/cart';
 import type { Product } from '@/lib/types/products';
 

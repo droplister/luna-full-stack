@@ -30,7 +30,7 @@ export function FreeShippingProgress({ subtotal, currency }: FreeShippingProgres
       <div className="mb-2">
         {hasReachedFreeShipping ? (
           <p className="text-sm font-semibold text-emerald-600">
-            🎉 You've unlocked FREE shipping!
+            🎉 You&apos;ve unlocked FREE shipping!
           </p>
         ) : (
           <p className="text-sm font-medium text-gray-900">
