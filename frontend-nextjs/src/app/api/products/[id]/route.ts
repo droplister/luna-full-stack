@@ -12,7 +12,8 @@ import { extractIdFromSlug } from '@/utils/slugify';
 import { cacheConfig } from '@/lib/config';
 
 // Revalidate product details every 60 seconds (ISR)
-export const revalidate = cacheConfig.products.detail;
+// Note: Must be a literal number for Next.js static analysis
+export const revalidate = 60;
 
 export async function GET(
   request: NextRequest,

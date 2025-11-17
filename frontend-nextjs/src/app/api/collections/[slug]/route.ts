@@ -11,7 +11,8 @@ import { fetchProductsByCategory } from '@/lib/services/products';
 import { cacheConfig } from '@/lib/config';
 
 // ISR caching: revalidate every 1 minute (60 seconds)
-export const revalidate = cacheConfig.collections.detail;
+// Note: Must be a literal number for Next.js static analysis
+export const revalidate = 60;
 
 interface RouteContext {
   params: Promise<{

@@ -13,7 +13,8 @@ import { cacheConfig } from '@/lib/config';
 
 // ISR caching: revalidate every 1 minute (60 seconds)
 // All ~40 products from 8 categories are fetched in parallel and cached
-export const revalidate = cacheConfig.products.list;
+// Note: Must be a literal number for Next.js static analysis
+export const revalidate = 60;
 
 export async function GET() {
   try {
