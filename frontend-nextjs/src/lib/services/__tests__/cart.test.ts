@@ -1,8 +1,9 @@
 /**
- * Unit tests for Cart Service Layer
+ * Unit tests for Cart Utility Functions
+ * (Functions moved to utils/format.ts)
  */
 
-import { centsToDollars, formatPrice } from '../cart';
+import { centsToDollars, formatPrice } from '../../utils/format';
 
 describe('Cart Service - Utility Functions', () => {
   describe('centsToDollars', () => {

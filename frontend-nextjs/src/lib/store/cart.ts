@@ -40,7 +40,7 @@ export interface CartState {
 
   // Actions
   setCart: (cart: Cart) => void;
-  setCartIfCurrent: (cart: Cart, expectedVersion: number) => void;
+  setCartIfCurrent: (cart: Cart, expectedVersion: number) => boolean;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   openCart: () => void;
@@ -82,23 +82,31 @@ export const useCartStore = create<CartState>((set, get) => ({
     })),
 
   // Update cart only if version matches (prevents stale server responses from regressing state)
-  setCartIfCurrent: (cart: Cart, expectedVersion: number) =>
+  // Returns true if update was applied, false if ignored (stale)
+  setCartIfCurrent: (cart: Cart, expectedVersion: number) => {
+    let wasApplied = false;
+
     set((state) => {
       // If state has been updated since this request was made, ignore this response
       if (state.stateVersion !== expectedVersion) {
         console.debug(
           `[Cart] Ignoring stale server response (expected v${expectedVersion}, current v${state.stateVersion})`
         );
+        wasApplied = false;
         return {};
       }
 
+      wasApplied = true;
       return {
         items: cart.items,
         subtotal: cart.subtotal,
         currency: cart.currency,
         error: null,
       };
-    }),
+    });
+
+    return wasApplied;
+  },
 
   // Loading state
   setLoading: (loading: boolean) =>

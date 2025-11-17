@@ -85,7 +85,7 @@ export function CartLineItem({
               >
                 −
               </button>
-              <div className="flex h-6 min-w-12 items-center justify-center rounded border border-gray-300 bg-gray-50 px-2 text-sm font-medium text-gray-900 sm:h-7">
+              <div data-testid="cart-item-quantity" className="flex h-6 min-w-12 items-center justify-center rounded border border-gray-300 bg-gray-50 px-2 text-sm font-medium text-gray-900 sm:h-7">
                 {item.quantity}
               </div>
               <button

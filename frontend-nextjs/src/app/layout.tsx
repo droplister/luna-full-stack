@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { LayoutContent } from "@/components/layouts/checkout-layout";
 import { generateDefaultMetadata } from "@/lib/utils/metadata";
 import { Toaster } from 'react-hot-toast';
 import { QueryProvider } from '@/lib/providers/query-provider';
@@ -46,7 +45,7 @@ export default function RootLayout({
               },
             }}
           />
-          <LayoutContent>{children}</LayoutContent>
+          {children}
         </QueryProvider>
       </body>
     </html>

@@ -39,7 +39,7 @@ export function ProductCard({ product, onAddToCart, priority = false }: ProductC
   const productUrl = getProductUrl(product)
 
   return (
-    <div className="group relative text-sm">
+    <div data-testid="product-card" className="group relative text-sm">
       <Link href={productUrl}>
         <Image
           alt={product.title}

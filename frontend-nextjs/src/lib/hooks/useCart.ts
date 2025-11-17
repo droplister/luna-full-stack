@@ -152,12 +152,20 @@ export function useCart(): UseCartReturn {
       const cart: Cart = await response.json();
 
       // Update with server response only if state hasn't changed (prevents race conditions)
-      startTransition(() => {
-        setCartIfCurrent(cart, expectedVersion);
-        clearSnapshot();
-      });
+      const wasApplied = setCartIfCurrent(cart, expectedVersion);
+
+      if (wasApplied) {
+        // Response was applied successfully
+        startTransition(() => {
+          clearSnapshot();
+        });
+      } else {
+        // Response was stale and ignored - a newer response already updated the state
+        // Don't rollback or show error - this is expected behavior
+        console.debug('[Cart] Stale updateQuantity response ignored - newer state already applied');
+      }
     } catch (err) {
-      // Rollback on error
+      // Only rollback and show error for actual failures (network errors, server errors)
       rollbackState();
       const errorMessage = err instanceof Error ? err.message : 'Failed to update quantity';
       toast.error(errorMessage);
@@ -264,11 +272,20 @@ export function useCart(): UseCartReturn {
 
         // Update with server response only if state hasn't changed (prevents race conditions)
         startTransition(() => {
-          setCartIfCurrent(cart, expectedVersion);
-          clearSnapshot();
-        });
+        const wasApplied = setCartIfCurrent(cart, expectedVersion);
+
+        if (wasApplied) {
+          // Response was applied successfully
+          startTransition(() => {
+            clearSnapshot();
+          });
+        } else {
+          // Response was stale and ignored - a newer response already updated the state
+          // Don't rollback or show error - this is expected behavior
+          console.debug('[Cart] Stale addItem response ignored - newer state already applied');
+        }
       } catch (err) {
-        // Rollback on error
+        // Only rollback and show error for actual failures (network errors, server errors)
         rollbackState();
         const errorMessage = err instanceof Error ? err.message : 'Failed to add item to cart';
         toast.error(errorMessage);
@@ -360,12 +377,20 @@ export function useCart(): UseCartReturn {
         const cart: Cart = await response.json();
 
         // Update with server response only if state hasn't changed (prevents race conditions)
-        startTransition(() => {
-          setCartIfCurrent(cart, expectedVersion);
-          clearSnapshot();
-        });
+        const wasApplied = setCartIfCurrent(cart, expectedVersion);
+
+        if (wasApplied) {
+          // Response was applied successfully
+          startTransition(() => {
+            clearSnapshot();
+          });
+        } else {
+          // Response was stale and ignored - a newer response already updated the state
+          // Don't rollback or show error - this is expected behavior
+          console.debug('[Cart] Stale removeItem response ignored - newer state already applied');
+        }
       } catch (err) {
-        // Rollback on error
+        // Only rollback and show error for actual failures (network errors, server errors)
         rollbackState();
         const errorMessage = err instanceof Error ? err.message : 'Failed to remove item';
         toast.error(errorMessage);

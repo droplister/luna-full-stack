@@ -20,9 +20,10 @@ export function ApparateButton({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Preload swoosh sound
+  // Preload swoosh sound (with cache-busting to prevent cache errors)
   useEffect(() => {
-    audioRef.current = new Audio("/sounds/swoosh.mp3");
+    audioRef.current = new Audio("/sounds/swoosh.mp3?v=1");
+    audioRef.current.preload = "auto";
   }, []);
 
   // Delay showing loading state to prevent flicker (like product page does)
