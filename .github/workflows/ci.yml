@@ -1,0 +1,177 @@
+name: CI
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  frontend-unit-tests:
+    name: Frontend Unit Tests & Quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend-nextjs/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend-nextjs
+        run: npm ci
+
+      - name: Run unit tests
+        working-directory: frontend-nextjs
+        run: npm run test:ci
+
+      - name: TypeScript type check
+        working-directory: frontend-nextjs
+        run: npx tsc --noEmit
+
+      - name: Lint
+        working-directory: frontend-nextjs
+        run: npm run lint
+
+  backend-tests:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: intl, mbstring, curl
+          coverage: none
+
+      - name: Validate composer.json
+        working-directory: backend-php
+        run: composer validate --strict
+
+      - name: Install dependencies
+        working-directory: backend-php
+        run: composer install --prefer-dist --no-progress --no-suggest
+
+      - name: Run tests
+        working-directory: backend-php
+        run: composer test
+
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: intl, mbstring, curl
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend-nextjs/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: backend-php
+        run: composer install --prefer-dist --no-progress
+
+      - name: Install frontend dependencies
+        working-directory: frontend-nextjs
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: frontend-nextjs
+        run: npx playwright install --with-deps chromium
+
+      - name: Start PHP backend server
+        working-directory: backend-php
+        run: |
+          nohup php spark serve > backend.log 2>&1 &
+          echo $! > backend.pid
+          echo "Backend PID: $(cat backend.pid)"
+
+      - name: Wait for backend to be ready
+        run: |
+          echo "Waiting for backend to start..."
+          timeout 30 bash -c 'until curl -sf http://localhost:8080/api/cart > /dev/null; do
+            echo "Backend not ready yet...";
+            sleep 2;
+          done' || (echo "Backend failed to start" && cat backend-php/backend.log && exit 1)
+          echo "✓ Backend is ready"
+
+      - name: Build Next.js application
+        working-directory: frontend-nextjs
+        env:
+          BACKEND_BASE_URL: http://localhost:8080/api
+        run: npm run build
+
+      - name: Start Next.js server
+        working-directory: frontend-nextjs
+        env:
+          BACKEND_BASE_URL: http://localhost:8080/api
+        run: |
+          nohup npm run start > frontend.log 2>&1 &
+          echo $! > frontend.pid
+          echo "Frontend PID: $(cat frontend.pid)"
+
+      - name: Wait for frontend to be ready
+        run: |
+          echo "Waiting for frontend to start..."
+          timeout 60 bash -c 'until curl -sf http://localhost:3000 > /dev/null; do
+            echo "Frontend not ready yet...";
+            sleep 2;
+          done' || (echo "Frontend failed to start" && cat frontend-nextjs/frontend.log && exit 1)
+          echo "✓ Frontend is ready"
+
+      - name: Run E2E tests
+        working-directory: frontend-nextjs
+        env:
+          CI: true
+        run: npm run test:e2e
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend-nextjs/playwright-report/
+          retention-days: 7
+
+      - name: Upload test logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-logs
+          path: |
+            backend-php/backend.log
+            frontend-nextjs/frontend.log
+          retention-days: 7
+
+      - name: Stop servers
+        if: always()
+        run: |
+          if [ -f backend-php/backend.pid ]; then
+            echo "Stopping backend (PID: $(cat backend-php/backend.pid))"
+            kill $(cat backend-php/backend.pid) 2>/dev/null || true
+          fi
+          if [ -f frontend-nextjs/frontend.pid ]; then
+            echo "Stopping frontend (PID: $(cat frontend-nextjs/frontend.pid))"
+            kill $(cat frontend-nextjs/frontend.pid) 2>/dev/null || true
+          fi
+          # Give servers time to shut down gracefully
+          sleep 2

@@ -8,7 +8,8 @@ import type { Cart, AddToCartRequest, UpdateCartLineRequest } from '../types/car
 import { cacheConfig } from '@/lib/config';
 
 // Base URL from environment variable, fallback to localhost
-const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_BASE_URL || 'http://localhost:8080/api';
+// Server-side only - not exposed to client
+const BASE_URL = process.env.BACKEND_BASE_URL || 'http://localhost:8080/api';
 
 /**
  * Helper to get headers with optional cookie forwarding

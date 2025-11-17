@@ -18,7 +18,7 @@ describe('Backend Client', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     // Mock environment variable
-    vi.stubEnv('NEXT_PUBLIC_BACKEND_BASE_URL', 'http://backend-php.test/api')
+    vi.stubEnv('BACKEND_BASE_URL', 'http://backend-php.test/api')
   })
 
   describe('getCart', () => {

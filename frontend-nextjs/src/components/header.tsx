@@ -26,6 +26,7 @@ import { RevelioModal } from '@/components/modals/revelio-modal'
 import { PromoBar } from '@/components/ui/promo-bar'
 import { usePromoStore } from '@/lib/store/promo'
 import { features, Z_INDEX } from '@/lib/config'
+import { getProductUrlFromIdAndTitle } from '@/utils/slugify'
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -120,7 +121,7 @@ export function Header() {
                           className="aspect-square w-full rounded-lg bg-gray-100 object-cover group-hover:opacity-75"
                         />
                         <Link
-                          href={item.href}
+                          href={getProductUrlFromIdAndTitle(item.productId, item.name)}
                           className="mt-6 block font-medium text-gray-900"
                           onClick={() => setMobileMenuOpen(false)}
                         >
@@ -204,7 +205,7 @@ export function Header() {
                                       height={200}
                                       className="aspect-square w-full rounded-lg bg-gray-100 object-cover group-hover:opacity-75"
                                     />
-                                    <Link href={item.href} className="mt-6 block font-medium text-gray-900" onClick={() => close()}>
+                                    <Link href={getProductUrlFromIdAndTitle(item.productId, item.name)} className="mt-6 block font-medium text-gray-900" onClick={() => close()}>
                                       <span aria-hidden="true" className="absolute inset-0" style={{ zIndex: Z_INDEX.MEGA_MENU_FEATURED_LINK }} />
                                       {item.name}
                                     </Link>

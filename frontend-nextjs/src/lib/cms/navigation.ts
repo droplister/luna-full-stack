@@ -17,6 +17,7 @@ export interface NavSection {
 export interface FeaturedProduct {
   name: string
   href: string
+  productId: number
   imageSrc: string
   imageAlt: string
 }
@@ -52,13 +53,15 @@ export const navigation = {
       featured: [
         {
           name: 'Essence Mascara Lash Princess',
-          href: '/products/1',
+          productId: 1,
+          href: '/products/1', // Will be overridden with slugged URL in header component
           imageSrc: 'https://cdn.dummyjson.com/product-images/beauty/essence-mascara-lash-princess/thumbnail.webp',
           imageAlt: 'Essence Mascara Lash Princess',
         },
         {
           name: "Dior J'adore",
-          href: '/products/8',
+          productId: 8,
+          href: '/products/8', // Will be overridden with slugged URL in header component
           imageSrc: "https://cdn.dummyjson.com/product-images/fragrances/dior-j'adore/thumbnail.webp",
           imageAlt: "Dior J'adore",
         },
