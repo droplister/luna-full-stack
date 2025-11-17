@@ -274,6 +274,9 @@ test.describe('API Integration & Error Resilience', () => {
   });
 
   test('should maintain data consistency across page reloads', async ({ page }) => {
+    // Increase timeout for this test due to external API calls during SSR
+    test.setTimeout(90000);
+
     await page.goto('/products');
     await page.waitForSelector('button:has-text("Add to Cart")', { timeout: 10000 });
 
@@ -286,8 +289,8 @@ test.describe('API Integration & Error Resilience', () => {
     const closeButton = page.locator('button:has([class*="sr-only"]:has-text("Close panel"))').first();
     await closeButton.click();
 
-    // Reload the page
-    await page.reload({ waitUntil: 'networkidle' });
+    // Reload the page - wait for load state instead of networkidle to avoid timeout
+    await page.reload({ waitUntil: 'load', timeout: 60000 });
 
     // Wait for page to load
     await page.waitForSelector('button:has-text("Cart"), [data-testid="cart-button"]', { timeout: 10000 });
