@@ -5,6 +5,7 @@
 
 import { generateProductSlug } from '@/utils/slugify'
 import type { Product } from '@/lib/types/products'
+import { fetchAllCategoryProducts } from '@/lib/services/products'
 
 /**
  * Generate static params for all product pages
@@ -14,21 +15,9 @@ import type { Product } from '@/lib/types/products'
  */
 export async function generateProductStaticParams() {
   try {
-    // Determine the API URL based on environment
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
-
-    // Fetch all products from the API
-    const response = await fetch(`${apiUrl}/api/products`, {
-      // Disable caching during build to get fresh data
-      cache: 'no-store',
-    })
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch products: ${response.status}`)
-    }
-
-    const data = await response.json()
-    const products: Product[] = data.products || []
+    // Fetch all products directly from service layer
+    // This avoids HTTP self-referencing during build time
+    const { products } = await fetchAllCategoryProducts()
 
     // Generate slug-based params for each product
     return products.map((product) => ({
